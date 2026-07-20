@@ -1,0 +1,14 @@
+generated: '2026-07-17'
+method: derived
+source: openapi/adaptive-security-openapi.json
+summary:
+  types:
+  - http
+schemes:
+- name: bearer-token
+  type: http
+  scheme: bearer
+  description: 'API authentication token obtained from the Adaptive Admin portal (Settings →
+    API Tokens). Include the token in the Authorization header as: Bearer [example key]'
+  sources:
+  - openapi/adaptive-security-openapi.json
