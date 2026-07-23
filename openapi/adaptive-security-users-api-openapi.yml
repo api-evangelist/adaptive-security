@@ -1,0 +1,416 @@
+openapi: 3.1.0
+info:
+  description: "Adaptive API for external integrations.\n\n## \uD83D\uDCCA API Overview\n\nThe Adaptive API enables organizations to build comprehensive reporting and analytics around their security awareness training programs. This RESTful API provides programmatic access to track employee training progress, monitor compliance, and generate insights about your organization's security training effectiveness.\n\n### Purpose & Use Cases\n\nThis API is designed for:\n- **Compliance Reporting**: Track training completion rates and identify employees with overdue trainings\n- **Progress Monitoring**: Get real-time visibility into individual and team training progress\n- **Data Integration**: Sync training data with your HRIS, BI tools, or custom dashboards\n- **Automated Workflows**: Build alerts and notifications for training milestones or compliance deadlines\n\n### Technical Design\n\nThe API follows REST principles with:\n- Resource-oriented URLs that clearly represent your data\n- Standard HTTP methods (GET for reading data)\n- JSON responses for easy parsing and integration\n- Consistent error handling with detailed error messages\n- Token-based authentication for secure access\n\n### Available Resources\n\n| Resource | Purpose | Common Use Cases |\n|----------|---------|------------------|\n| **Users** | Access employee directory data | • Export user lists for reporting<br>• Track user status changes<br>• Map users to departments |\n| **Training** | Monitor training campaigns and progress | • Track campaign completion rates<br>• Identify at-risk employees<br>• Generate compliance reports |\n\n## \uD83D\uDE80 Quick Start Guide\n\nGet started with the Adaptive API in just 3 steps:\n\n### Step 1: Get Your API Token\nSee [Authentication](#section/Authentication) for more details on how to generate and use API tokens.\n\n### Step 2: Make Your First API Call\n```bash\ncurl -X GET https://api.adaptivesecurity.com/v2/users \\\n  -H \"Authorization: Bearer YOUR_API_TOKEN\"\n```\n\n### Step 3: Handle the Response\n```json\n{\n  \"users\": [\n    {\n      \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"email\": \"john.smith@example.com\",\n      \"first_name\": \"John\",\n      \"last_name\": \"Smith\",\n      \"status\": \"ACTIVE\"\n    }\n  ],\n  \"page_after\": \"123e4567-e89b-12d3-a456-426614174000\"\n}\n```\n\n## \uD83D\uDD10 Authentication\n\nAll API endpoints require authentication using an API token:\n\n```http\nAuthorization: Bearer YOUR_API_TOKEN\n```\n\n**Token Management:**\n- Tokens are generated in the Admin portal under **Settings → API**\n- Tokens have a user-set expiration but can be revoked at any time\n- Store tokens securely - treat them like passwords\n## \uD83C\uDF10 Base URL\n\nAll API endpoints are relative to:\n```\nhttps://api.adaptivesecurity.com\n```\n\n## \uD83D\uDEA8 Error Handling\n\nAll API errors follow a consistent JSON structure:\n\n### Standard Error Response\n```json\n{\n  \"error_code\": \"RESOURCE_NOT_FOUND\",\n  \"message\": \"The requested user was not found\",\n  \"status_code\": 404,\n  \"request_id\": \"3e502c09-4fd3-42d3-8b3a-4e2f08de0bbf\"\n}\n```\n\n### Validation Error Response\n```json\n{\n  \"error_code\": \"VALIDATION_ERROR\",\n  \"message\": \"Request validation failed\",\n  \"status_code\": 400,\n  \"request_id\": \"1d7c1712-2b8e-43f4-90c6-1185e249bdf0\",\n  \"details\": [\n    {\n      \"field\": \"page\",\n      \"message\": \"Page must be a non-negative integer\"\n    }\n  ]\n}\n```\n\n### Error Code Reference\n| Code | Status | Description | Action |\n|------|--------|-------------|--------|\n| `INVALID_TOKEN` | 401 | Token is invalid or expired | Check token validity |\n| `RESOURCE_NOT_FOUND` | 404 | Resource doesn't exist | Verify resource ID |\n| `VALIDATION_ERROR` | 400 | Request validation failed | Check field errors |\n| `INTERNAL_SERVER_ERROR` | 500 | Server error | Contact support |\n\n## \uD83D\uDCCB Request & Response Headers\n\n### Required Request Headers\n```http\nAuthorization: Bearer YOUR_API_TOKEN\n```\n\n### Optional Request Headers\n```http\nAccept: application/json\nContent-Type: application/json  # Required for POST/PUT\n```\n\n### Response Headers\n```http\nX-Request-ID: 6acb3ce1-672a-4a49-8fa1-f1a994eef9fd\nContent-Type: application/json\n```\n\n## \uD83D\uDCC4 Pagination\n\nList endpoints return paginated results for optimal performance:\n\n- **Page cursor**: `page_after` field in the response to get the next page\n- **Default sorting**: By creation date (newest first)\n\n### Pagination Example\n```bash\n# Get the next page of users\ncurl -X GET \"https://api.adaptivesecurity.com/v2/users?page_after=5a6dce1e-8d0f-46b1-b263-50b6adca62da\" \\\n  -H \"Authorization: Bearer YOUR_API_TOKEN\"\n```\n\n### Pagination Response\n```json\n{\n  \"users\": [...],\n  \"page_after\": \"123e4567-e89b-12d3-a456-426614174000\"\n}\n```\n\n## \uD83D\uDD50 Timestamps\n\nAll timestamps use ISO 8601 format in UTC:\n```\n2024-12-10T15:30:45.402Z\n```"
+  title: Adaptive Audit Logs Users API
+  version: v2
+servers:
+- url: https://api.adaptivesecurity.com
+  description: Production API
+security:
+- bearer-token: []
+tags:
+- description: '<span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>User management endpoints'
+  name: Users
+paths:
+  /v2/users:
+    get:
+      description: '<span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>Retrieve a paginated list of users'
+      operationId: listUsers
+      parameters:
+      - description: Page cursor
+        example: 0e3fbf7d-5b97-4aa9-9739-fac5c47a7f26
+        in: query
+        name: page_after
+        required: false
+        schema:
+          type: string
+      - description: Page size
+        example: 100
+        in: query
+        name: page_size
+        required: false
+        schema:
+          type: integer
+          default: 100
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                Success Response:
+                  description: Success Response
+                  value:
+                    users:
+                    - id: 123e4567-e89b-12d3-a456-426614174000
+                      status: ACTIVE
+                      email: john.smith@example.com
+                      first_name: John
+                      last_name: Smith
+                      department: Engineering
+                      job_title: Senior Engineer
+                      phone_number: '+15555553456'
+                      mobile_phone_number: '+15555553457'
+                      location: Office A
+                      divisions:
+                      - Consumer Devices
+                      manager_name: Andrew Smith
+                      manager_email: andrew@example.com
+                      organization: Adaptive
+                      languages:
+                      - en-US
+                      start_date: '2024-02-16T08:30:00Z'
+                      current_risk_score: 40
+                      created_at: '2024-02-15T08:30:00Z'
+                    - id: 0e3fbf7d-5b97-4aa9-9739-fac5c47a7f26
+                      status: ACTIVE
+                      email: jane.smith@example.com
+                      first_name: Jane
+                      last_name: Smith
+                      department: Product
+                      job_title: Product Manager
+                      phone_number: '+15555557638'
+                      mobile_phone_number: '+15555555432'
+                      location: Office B
+                      divisions:
+                      - Consumer Devices
+                      manager_name: Sandy Ingram
+                      manager_email: sandy@example.com
+                      organization: Adaptive
+                      languages:
+                      - en-US
+                      start_date: '2024-01-16T08:30:00Z'
+                      current_risk_score: 75
+                      created_at: '2024-01-15T08:30:00Z'
+                    page_after: 0e3fbf7d-5b97-4aa9-9739-fac5c47a7f26
+              schema:
+                $ref: '#/components/schemas/UserListResponseDto'
+          description: Successfully retrieved users
+        '400':
+          content:
+            application/json:
+              examples:
+                Validation Error:
+                  description: Validation Error
+                  value:
+                    error_code: VALIDATION_ERROR
+                    message: Request validation failed
+                    status_code: 400
+                    request_id: 8c6b4f23-9cd0-4d38-9b55-d4a7867e0959
+                    details:
+                    - field: page_after
+                      message: Page cursor must be a string
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponseDto'
+          description: Bad request - Invalid parameters
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '429':
+          content:
+            application/json:
+              examples:
+                Rate Limit Error:
+                  description: Rate Limit Error
+                  value:
+                    error_code: RATE_LIMIT_EXCEEDED
+                    message: API rate limit exceeded. Please retry after some time
+                    status_code: 429
+                    request_id: b7c1196e-2c6e-4d17-8f3c-fcb62d6d27a2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Too many requests - Rate limit exceeded
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: List users
+      tags:
+      - Users
+  /v2/users/{userId}:
+    get:
+      description: '<span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>Retrieve detailed information about a specific user'
+      operationId: getUser
+      parameters:
+      - description: User ID
+        example: 123e4567-e89b-12d3-a456-426614174000
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                Success Response:
+                  description: Success Response
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    status: ACTIVE
+                    email: john.smith@example.com
+                    created_at: '2024-02-15T08:30:00Z'
+                    first_name: John
+                    last_name: Smith
+                    job_title: Senior Engineer
+                    phone_number: '+15555553456'
+                    mobile_phone_number: '+15555553457'
+                    location: Office A
+                    divisions:
+                    - Consumer Devices
+                    manager_name: Andrew Smith
+                    manager_email: andrew@example.com
+                    organization: Adaptive
+                    department: Engineering
+                    languages:
+                    - en-US
+                    start_date: '2024-02-16T08:30:00Z'
+                    current_risk_score: 40
+              schema:
+                $ref: '#/components/schemas/UserDto'
+          description: Successfully retrieved user details
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          content:
+            application/json:
+              examples:
+                Not Found Error:
+                  description: Not Found Error
+                  value:
+                    error_code: RESOURCE_NOT_FOUND
+                    message: The requested user was not found
+                    status_code: 404
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: User not found
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Get user details
+      tags:
+      - Users
+components:
+  schemas:
+    UserDto:
+      type: object
+      description: User information
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: User's created date
+          example: '2025-01-01T13:19:13.402Z'
+        current_risk_score:
+          type: integer
+          format: int32
+          description: User's current risk score
+          example: 75
+        department:
+          type: string
+          description: User's department
+          example: Engineering
+        divisions:
+          type: array
+          description: User's divisions
+          example:
+          - Consumer Devices
+          items:
+            type: string
+        email:
+          type: string
+          description: User's email address
+          example: john.smith@example.com
+        first_name:
+          type: string
+          description: User's first name
+          example: John
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: 123e4567-e89b-12d3-a456-426614174000
+        job_title:
+          type: string
+          description: User's job title
+          example: Senior Engineer
+        languages:
+          type: array
+          description: User's preferred languages
+          example:
+          - en-US
+          items:
+            type: string
+        last_name:
+          type: string
+          description: User's last name
+          example: Smith
+        location:
+          type: string
+          description: User's location
+          example: Office A
+        manager_email:
+          type: string
+          description: Manager's email address
+          example: andrew@example.com
+        manager_name:
+          type: string
+          description: Manager's name
+          example: Andrew Smith
+        mobile_phone_number:
+          type: string
+          description: User's mobile phone number
+          example: +1-555-012-3457
+        organization:
+          type: string
+          description: Organization name
+          example: Adaptive
+        phone_number:
+          type: string
+          description: User's office phone number
+          example: +1-555-012-3456
+        start_date:
+          type: string
+          format: date-time
+          description: User's start date
+          example: '2025-01-01T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of the user
+          enum:
+          - ACTIVE
+          - DEACTIVATED
+          - EXCLUDED
+          example: ACTIVE
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    UserListResponseDto:
+      type: object
+      properties:
+        page_after:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDto'
+  securitySchemes:
+    bearer-token:
+      description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
+      scheme: bearer
+      type: http
