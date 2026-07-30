@@ -1,20 +1,273 @@
 aid: adaptive-security
 name: Adaptive Security
-description: Adaptive Security is a company surfaced as a portfolio company of a16z and added to the API
-  Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+description: >-
+  Adaptive Security is the human security platform for the AI era, defending
+  organizations against AI-powered social engineering — deepfakes, voice
+  cloning, phishing, smishing and vishing — through interactive security
+  awareness training, hyperrealistic multi-channel attack simulations, cloud
+  email security, and AI governance. Founded by Brian Long and Andrew Jones and
+  backed by Andreessen Horowitz (a16z) and the OpenAI Startup Fund, Adaptive
+  protects 1,000+ enterprise customers including PayPal, Figma, Ramp, Plaid and
+  the NHL. The Adaptive API is a read-only REST reporting interface (v2) that
+  gives programmatic access to users, groups, training campaigns, phishing
+  campaigns and simulations, and audit logs for compliance reporting, progress
+  monitoring, and BI/HRIS/SIEM data integration.
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://www.adaptivesecurity.com/og-image.jpg
 url: https://raw.githubusercontent.com/api-evangelist/adaptive-security/refs/heads/main/apis.yml
 x-type: company
 x-source: a16z-portfolio
-x-tier: stub
-x-tier-reason: portfolio-lead
+x-tier: profiled
+x-tier-reason: enrichment-pipeline
 specificationVersion: '0.20'
 created: '2026-07-17'
 modified: '2026-07-17'
 tags:
 - Company
-apis: []
+- Security
+- Cybersecurity
+- Security Awareness Training
+- Phishing Simulation
+- Deepfake Defense
+- AI Governance
+- Social Engineering
+- Reporting
+- Compliance
+apis:
+- aid: adaptive-security:adaptive-security-audit-logs-api
+  name: Adaptive Security Audit Logs API
+  description: >-
+    <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size:
+    10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>Admin audit log
+    endpoints
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Audit Logs
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-audit-logs-api-openapi.yml
+  - type: APIReference
+    url: https://developer.adaptivesecurity.com/
+  - type: Documentation
+    url: https://developer.adaptivesecurity.com/
+  - type: Authentication
+    url: authentication/adaptive-security-authentication.yml
+  - type: Conventions
+    url: conventions/adaptive-security-conventions.yml
+  - type: ErrorCatalog
+    url: errors/adaptive-security-problem-types.yml
+  - type: Lifecycle
+    url: lifecycle/adaptive-security-lifecycle.yml
+  - type: Conformance
+    url: conformance/adaptive-security-conformance.yml
+  - type: DataModel
+    url: data-model/adaptive-security-data-model.yml
+  - type: LLMsTxt
+    url: llms/adaptive-security-llms.txt
+- aid: adaptive-security:adaptive-security-groups-api
+  name: Adaptive Security Groups API
+  description: >-
+    <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size:
+    10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>User group management
+    endpoints
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Groups
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-groups-api-openapi.yml
+  - type: APIReference
+    url: https://developer.adaptivesecurity.com/
+  - type: Documentation
+    url: https://developer.adaptivesecurity.com/
+  - type: Authentication
+    url: authentication/adaptive-security-authentication.yml
+  - type: Conventions
+    url: conventions/adaptive-security-conventions.yml
+  - type: ErrorCatalog
+    url: errors/adaptive-security-problem-types.yml
+  - type: Lifecycle
+    url: lifecycle/adaptive-security-lifecycle.yml
+  - type: Conformance
+    url: conformance/adaptive-security-conformance.yml
+  - type: DataModel
+    url: data-model/adaptive-security-data-model.yml
+  - type: LLMsTxt
+    url: llms/adaptive-security-llms.txt
+- aid: adaptive-security:adaptive-security-phishing-api
+  name: Adaptive Security Phishing API
+  description: >-
+    <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size:
+    10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>Phishing campaign
+    and simulation management endpoints
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Phishing
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-phishing-api-openapi.yml
+  - type: APIReference
+    url: https://developer.adaptivesecurity.com/
+  - type: Documentation
+    url: https://developer.adaptivesecurity.com/
+  - type: Authentication
+    url: authentication/adaptive-security-authentication.yml
+  - type: Conventions
+    url: conventions/adaptive-security-conventions.yml
+  - type: ErrorCatalog
+    url: errors/adaptive-security-problem-types.yml
+  - type: Lifecycle
+    url: lifecycle/adaptive-security-lifecycle.yml
+  - type: Conformance
+    url: conformance/adaptive-security-conformance.yml
+  - type: DataModel
+    url: data-model/adaptive-security-data-model.yml
+  - type: LLMsTxt
+    url: llms/adaptive-security-llms.txt
+- aid: adaptive-security:adaptive-security-training-api
+  name: Adaptive Security Training API
+  description: >-
+    <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size:
+    10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>Training campaign
+    and activity endpoints
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Training
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-training-api-openapi.yml
+  - type: APIReference
+    url: https://developer.adaptivesecurity.com/
+  - type: Documentation
+    url: https://developer.adaptivesecurity.com/
+  - type: Authentication
+    url: authentication/adaptive-security-authentication.yml
+  - type: Conventions
+    url: conventions/adaptive-security-conventions.yml
+  - type: ErrorCatalog
+    url: errors/adaptive-security-problem-types.yml
+  - type: Lifecycle
+    url: lifecycle/adaptive-security-lifecycle.yml
+  - type: Conformance
+    url: conformance/adaptive-security-conformance.yml
+  - type: DataModel
+    url: data-model/adaptive-security-data-model.yml
+  - type: LLMsTxt
+    url: llms/adaptive-security-llms.txt
+- aid: adaptive-security:adaptive-security-users-api
+  name: Adaptive Security Users API
+  description: >-
+    <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size:
+    10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;">BETA</span>User management
+    endpoints
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Users
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-users-api-openapi.yml
+  - type: APIReference
+    url: https://developer.adaptivesecurity.com/
+  - type: Documentation
+    url: https://developer.adaptivesecurity.com/
+  - type: Authentication
+    url: authentication/adaptive-security-authentication.yml
+  - type: Conventions
+    url: conventions/adaptive-security-conventions.yml
+  - type: ErrorCatalog
+    url: errors/adaptive-security-problem-types.yml
+  - type: Lifecycle
+    url: lifecycle/adaptive-security-lifecycle.yml
+  - type: Conformance
+    url: conformance/adaptive-security-conformance.yml
+  - type: DataModel
+    url: data-model/adaptive-security-data-model.yml
+  - type: LLMsTxt
+    url: llms/adaptive-security-llms.txt
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+common:
+# --- identity / link properties (verified live) ---
+- type: Website
+  url: https://www.adaptivesecurity.com/
+- type: DeveloperPortal
+  url: https://developer.adaptivesecurity.com/
+- type: Documentation
+  url: https://developer.adaptivesecurity.com/
+- type: APIReference
+  url: https://developer.adaptivesecurity.com/
+- type: GettingStarted
+  url: https://developer.adaptivesecurity.com/
+- type: Blog
+  url: https://www.adaptivesecurity.com/blog
+- type: Support
+  url: https://www.adaptivesecurity.com/support
+- type: HelpCenter
+  url: https://help.adaptivesecurity.com/en/
+- type: Pricing
+  url: https://www.adaptivesecurity.com/pricing
+- type: SignUp
+  url: https://admin.adaptivesecurity.com/login
+- type: TermsOfService
+  url: https://www.adaptivesecurity.com/legal/terms-of-service
+- type: PrivacyPolicy
+  url: https://www.adaptivesecurity.com/legal/privacy-policy
+- type: StatusPage
+  url: https://status.adaptivesecurity.com/
+- type: GitHubOrganization
+  url: https://github.com/adaptivesecurity
+- type: Integrations
+  url: https://www.adaptivesecurity.com/integrations
+- type: LinkedIn
+  url: https://www.linkedin.com/company/adaptivesecurity
+# --- security / compliance (probed + verified) ---
+- type: TrustCenter
+  url: security/adaptive-security-trust-center.yml
+- type: Compliance
+  url: security/adaptive-security-trust-center.yml
+- type: DomainSecurity
+  url: security/adaptive-security-domain-security.yml
+# --- agent-native + artifact pointers (scored from common[]) ---
+- type: Authentication
+  url: authentication/adaptive-security-authentication.yml
+- type: ErrorCatalog
+  url: errors/adaptive-security-problem-types.yml
+- type: RateLimits
+  url: rate-limits/adaptive-security-rate-limits.yml
+- type: MCPServer
+  url: mcp/adaptive-security-mcp.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: AgenticAccess
+  url: agentic-access/adaptive-security-agentic-access.yml
+- type: Conventions
+  url: conventions/adaptive-security-conventions.yml
+- type: DataModel
+  url: data-model/adaptive-security-data-model.yml
+- type: Lifecycle
+  url: lifecycle/adaptive-security-lifecycle.yml
+- type: Conformance
+  url: conformance/adaptive-security-conformance.yml
+- type: Overlay
+  url: overlays/adaptive-security-openapi-overlay.yaml
+- type: LLMsTxt
+  url: llms/adaptive-security-llms.txt
