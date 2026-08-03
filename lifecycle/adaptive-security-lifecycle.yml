@@ -1,0 +1,23 @@
+generated: '2026-07-17'
+method: searched
+source: openapi/adaptive-security-openapi.json + https://status.adaptivesecurity.com/
+versioning:
+  scheme: uri-path
+  current: v2
+  base_url: https://api.adaptivesecurity.com
+  docs: https://developer.adaptivesecurity.com/
+deprecation:
+  policy_url: null
+  sunset_header: false
+  notes: No published deprecation policy or RFC 8594 Sunset/Deprecation header support found.
+sla:
+  url: null
+  uptime_target: null
+status_page: https://status.adaptivesecurity.com/
+status_components:
+- Admin UI
+- Employee Training UI
+- Email Training Reminders
+- Phishing Simulation Emails
+- Phishing Simulation Spoof Pages
+deprecated_operations: []

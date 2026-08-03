@@ -1,0 +1,21 @@
+generated: '2026-07-17'
+method: generated
+source: openapi/adaptive-security-openapi.json
+notes: >-
+  Packaged Agent Skills for the Adaptive API v2, grounded in real operationIds
+  from the OpenAPI. This is a read-only reporting API, so skills cover reporting
+  and export flows. Auth is bearer-token; lists are cursor-paginated (page_after
+  / page_size).
+skills:
+- file: adaptive-security-training-compliance-report.md
+  name: Report training-campaign compliance
+  api: openapi/adaptive-security-openapi.json
+  operations: [listTrainingCampaigns, getTrainingCampaign, getTrainingCampaignEnrollments, listUsers]
+- file: adaptive-security-phishing-simulation-report.md
+  name: Report phishing-simulation results
+  api: openapi/adaptive-security-openapi.json
+  operations: [listPhishingCampaigns, getPhishingCampaign, listCampaignSimulations, getSimulation, getPhishingEnrollments]
+- file: adaptive-security-audit-log-export.md
+  name: Export audit logs
+  api: openapi/adaptive-security-openapi.json
+  operations: [listAuditLogs, getAuditLog]

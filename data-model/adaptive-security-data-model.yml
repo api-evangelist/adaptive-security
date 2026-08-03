@@ -1,0 +1,86 @@
+generated: '2026-07-17'
+method: derived
+source: openapi/adaptive-security-openapi.json (schemas + id-reference query params)
+notes: >-
+  Entity-relationship graph derived from the Adaptive API v2 OpenAPI schemas and
+  the id-reference query parameters (user_id, group_id, campaign_id,
+  simulation_id) that link resources. Identifiers are UUID strings.
+entities:
+- name: User
+  schema: UserDto
+  path: /v2/users
+  id: id
+  fields: [id, email, first_name, last_name, status]
+- name: Group
+  schema: GroupDto
+  path: /v2/groups
+  id: id
+- name: GroupUser
+  schema: GroupUserDto
+  path: /v2/groups/{groupId}/users
+  id: id
+- name: TrainingCampaign
+  schema: TrainingCampaignDto
+  path: /v2/training/campaigns
+  id: id
+- name: TrainingCampaignEnrollment
+  schema: UserTrainingCampaignEnrollmentDto
+  path: /v2/training/campaigns/enrollments
+- name: PhishingCampaign
+  schema: PhishingCampaignDto
+  path: /v2/phishing/campaigns
+  id: id
+- name: PhishingCampaignScenario
+  schema: PhishingCampaignScenarioDto
+- name: PhishingSimulation
+  schema: PhishingSimulationDto
+  path: /v2/phishing/simulations/{simulationId}
+  id: id
+- name: PhishingEnrollment
+  schema: PhishingEnrollmentDto
+  path: /v2/phishing/campaigns/enrollments
+- name: AuditLog
+  schema: AuditLogDto
+  path: /v2/audit-logs
+  id: id
+relationships:
+- from: Group
+  type: has_many
+  to: GroupUser
+  via: groupId
+- from: GroupUser
+  type: belongs_to
+  to: User
+  via: user_id
+- from: TrainingCampaign
+  type: has_many
+  to: TrainingCampaignEnrollment
+  via: campaign_id
+- from: TrainingCampaignEnrollment
+  type: belongs_to
+  to: User
+  via: user_id
+- from: PhishingCampaign
+  type: has_many
+  to: PhishingSimulation
+  via: campaignId
+- from: PhishingCampaign
+  type: has_many
+  to: PhishingEnrollment
+  via: campaign_id
+- from: PhishingCampaign
+  type: has_many
+  to: PhishingCampaignScenario
+  via: campaignId
+- from: PhishingSimulation
+  type: belongs_to
+  to: PhishingCampaign
+  via: campaign_id
+- from: PhishingEnrollment
+  type: belongs_to
+  to: User
+  via: user_id
+- from: AuditLog
+  type: references
+  to: User
+  via: user_id

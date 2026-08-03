@@ -1,0 +1,49 @@
+generated: '2026-07-17'
+method: searched
+source: https://developer.adaptivesecurity.com/ (OpenAPI info.description Error Code Reference) + openapi/adaptive-security-openapi.json
+format: custom
+envelope:
+  content_type: application/json
+  fields:
+  - name: error_code
+    description: Machine-readable error code.
+  - name: message
+    description: Human-readable error message.
+  - name: status_code
+    description: HTTP status code.
+  - name: request_id
+    description: Unique request ID for debugging (also returned as X-Request-ID header).
+  validation_extra:
+    field: details
+    shape: array of { field, message }
+    used_by: VALIDATION_ERROR (400)
+error_codes:
+- code: INVALID_TOKEN
+  status: 401
+  title: Token is invalid or expired
+  remediation: Check token validity; regenerate in Admin portal → Settings → API Tokens.
+- code: RESOURCE_NOT_FOUND
+  status: 404
+  title: Resource doesn't exist
+  remediation: Verify the resource ID.
+- code: VALIDATION_ERROR
+  status: 400
+  title: Request validation failed
+  remediation: Inspect the details[] array for field-level errors.
+- code: INTERNAL_SERVER_ERROR
+  status: 500
+  title: Server error
+  remediation: Retry; contact support if it persists.
+http_statuses:
+- status: 200
+  description: Success.
+- status: 400
+  description: Bad request - invalid parameters (VALIDATION_ERROR).
+- status: 401
+  description: Unauthorized - invalid or missing authentication token (INVALID_TOKEN).
+- status: 404
+  description: Resource not found (RESOURCE_NOT_FOUND).
+- status: 429
+  description: Too many requests - rate limit exceeded.
+- status: 500
+  description: Internal server error (INTERNAL_SERVER_ERROR).

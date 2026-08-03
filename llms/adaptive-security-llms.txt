@@ -1,0 +1,58 @@
+# Adaptive Security
+
+> Adaptive Security is the human security platform for the AI era. We protect
+> organizations against AI-powered attacks — deepfakes, voice cloning, phishing,
+> and more — through interactive training, realistic simulations, email security,
+> and AI governance. Trusted by 1,000+ companies worldwide.
+
+## Products
+
+- [Security Awareness Training](https://adaptivesecurity.com/security-awareness-training): Modern, interactive training for AI, deepfakes, voice scams, and more. 1,000+ modules, fully editable, branded to you.
+- [Phishing Simulations](https://adaptivesecurity.com/products/phishing-simulation): Simulate email, voice, SMS, and deepfake attacks org-wide. AI-powered scenarios built on real employee data.
+- [Cloud Email Security](https://adaptivesecurity.com/email-security): Multi-layer AI detection built on top of Google and Microsoft — catching the threats they miss.
+- [AI Governance](https://adaptivesecurity.com/ai-governance): Real-time visibility, policy enforcement, and in-browser coaching for safe AI tool use.
+
+## Platform
+
+- [Risk Management](https://adaptivesecurity.com/risk): Individual employee risk scores based on training, simulation, and real-world behavior.
+- [Reporting](https://adaptivesecurity.com/reporting): Completion rates, threat breakdowns, and audit-ready exports for every compliance framework.
+- [Dynamic Groups](https://adaptivesecurity.com/dynamic-groups): Automatically enroll employees in the right training based on role, risk, and behavior.
+- [Integrations](https://adaptivesecurity.com/integrations): Connect to your HRIS, SSO, and security stack in minutes.
+
+## Solutions by Industry
+
+- [Finance](https://adaptivesecurity.com/solutions/finance)
+- [Healthcare](https://adaptivesecurity.com/solutions/healthcare)
+- [Technology](https://adaptivesecurity.com/solutions/technology)
+- [Sports & Entertainment](https://adaptivesecurity.com/solutions/sports)
+- [Government](https://adaptivesecurity.com/solutions/government)
+- [Education](https://adaptivesecurity.com/solutions/education)
+
+## Solutions by Size
+
+- [Enterprise](https://adaptivesecurity.com/solutions/enterprise)
+- [Mid-Market](https://adaptivesecurity.com/solutions/mid-market)
+- [Small Business](https://adaptivesecurity.com/solutions/small-business)
+
+## Resources
+
+- [Blog](https://adaptivesecurity.com/blog)
+- [Guides](https://adaptivesecurity.com/resources/guides)
+- [Webinars](https://adaptivesecurity.com/resources/webinars)
+- [Free Tools](https://adaptivesecurity.com/resources/free-tools)
+- [Press](https://adaptivesecurity.com/resources/press)
+- [Threat Wire](https://adaptivesecurity.com/threat-wire): Real-time AI threat intelligence feed.
+- [Glossary](https://adaptivesecurity.com/glossary)
+
+## Company
+
+- [Customers](https://adaptivesecurity.com/customers): Case studies from Ramp, NerdWallet, Attentive, Plaid, and 1,000+ more.
+- [Pricing](https://adaptivesecurity.com/pricing)
+- [Careers](https://adaptivesecurity.com/careers)
+- [Contact](https://adaptivesecurity.com/contact)
+
+## Free Training (no account required)
+
+- [Protecting Older Adults from AI Scams](https://adaptivesecurity.com/protecting-older-adults)
+- [Protecting Students from Deepfake Abuse](https://adaptivesecurity.com/protecting-students)
+- [Make Your Own Deepfake](https://adaptivesecurity.com/free-deepfake-test)

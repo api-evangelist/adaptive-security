@@ -1,0 +1,28 @@
+generated: '2026-07-17'
+method: searched
+source: probe of api.adaptivesecurity.com and www.adaptivesecurity.com .well-known paths
+notes: >-
+  The API host (api.adaptivesecurity.com) returns 404 ("No target group
+  configured") for all probed .well-known paths. The marketing host
+  (www.adaptivesecurity.com, a Next.js app) returns a 404 app-shell for
+  .well-known paths. The developer docs host (developer.adaptivesecurity.com)
+  is a single-page app that returns a 200 HTML shell for every path, so no
+  genuine .well-known document could be confirmed there. No .well-known
+  discovery documents were found. Absence is valid, expected data.
+hosts:
+- host: https://api.adaptivesecurity.com
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+- host: https://www.adaptivesecurity.com
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404

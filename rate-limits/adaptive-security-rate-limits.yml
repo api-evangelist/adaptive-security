@@ -1,0 +1,17 @@
+generated: '2026-07-17'
+method: derived
+source: openapi/adaptive-security-openapi.json (429 responses) + info.description
+documented: true
+signal:
+  http_status: 429
+  meaning: Too many requests - rate limit exceeded.
+  applies_to: list endpoints (and all v2 operations)
+headers:
+  documented: false
+  notes: No RateLimit-* / Retry-After headers are documented in the spec.
+limits: []
+limit_count: null
+notes: >-
+  The Adaptive API documents a 429 rate-limit response but does not publish
+  numeric request quotas or rate-limit response headers. Absence of a published
+  numeric limit is recorded as-is; no value is invented.

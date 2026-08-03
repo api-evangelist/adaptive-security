@@ -1,0 +1,27 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for Adaptive API
+  version: 1.0.0
+extends: openapi/adaptive-security-openapi.json
+actions:
+- target: $.info
+  update:
+    x-apievangelist-provider: adaptive-security
+    x-apievangelist-artifacts:
+      authentication: authentication/adaptive-security-authentication.yml
+      conventions: conventions/adaptive-security-conventions.yml
+      errors: errors/adaptive-security-problem-types.yml
+      data-model: data-model/adaptive-security-data-model.yml
+      lifecycle: lifecycle/adaptive-security-lifecycle.yml
+      conformance: conformance/adaptive-security-conformance.yml
+      rate-limits: rate-limits/adaptive-security-rate-limits.yml
+      agentic-access: agentic-access/adaptive-security-agentic-access.yml
+- target: $.info
+  update:
+    x-apievangelist-auth: bearer-token
+    x-apievangelist-pagination: cursor (page_after / page_size)
+    x-apievangelist-idempotency: not-applicable (read-only GET API)
+    x-apievangelist-status-page: https://status.adaptivesecurity.com/
+- target: $.servers
+  update:
+    x-apievangelist-note: Single production server; read-only reporting API.

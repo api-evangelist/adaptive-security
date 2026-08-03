@@ -1,0 +1,81 @@
+generated: '2026-07-17'
+method: searched
+source: https://developer.adaptivesecurity.com/
+provider: Adaptive Security
+api: Adaptive API
+base_url: https://api.adaptivesecurity.com
+notes: >-
+  Cross-cutting runtime semantics for the Adaptive API v2, derived from the
+  published OpenAPI 3.1 description and Redoc developer portal. This is a
+  read-only (GET-only) reporting API, so there are no write, idempotency, or
+  request-body conventions.
+authentication:
+  style: bearer-token
+  header: Authorization
+  format: 'Bearer YOUR_API_TOKEN'
+  token_source: 'Admin portal -> Settings -> API Tokens'
+  token_lifecycle: user-set expiration, revocable at any time
+  see: authentication/adaptive-security-authentication.yml
+versioning:
+  style: uri-path
+  current: v2
+  example: https://api.adaptivesecurity.com/v2/users
+  see: lifecycle/adaptive-security-lifecycle.yml
+pagination:
+  style: cursor
+  request_params:
+  - name: page_after
+    in: query
+    type: string
+    description: Cursor returned by the previous page (opaque id).
+  - name: page_size
+    in: query
+    type: integer
+    default: 100
+    description: Number of items per page.
+  response_fields:
+  - name: page_after
+    description: Cursor to pass on the next request; absent/empty when no more pages.
+  default_sort: creation date, newest first
+  example: 'GET /v2/users?page_after=5a6dce1e-8d0f-46b1-b263-50b6adca62da'
+request_id_tracing:
+  request_header: null
+  response_header: X-Request-ID
+  error_field: request_id
+  description: >-
+    Every response carries an X-Request-ID header, and every error body echoes a
+    request_id (UUID) for support/debugging correlation.
+error_envelope:
+  format: custom-json
+  is_rfc9457: false
+  media_type: application/json
+  fields:
+  - error_code (string, machine-readable)
+  - message (string, human-readable)
+  - status_code (integer, mirrors HTTP status)
+  - request_id (string, UUID)
+  - details (array, present on VALIDATION_ERROR; each {field, message})
+  see: errors/adaptive-security-problem-types.yml
+idempotency:
+  supported: false
+  reason: >-
+    Read-only API (only HTTP GET operations are exposed). GETs are inherently
+    idempotent per HTTP semantics; there is no idempotency-key mechanism because
+    there are no state-changing operations.
+rate_limiting:
+  documented: true
+  signal: HTTP 429 (Too Many Requests) responses are declared on list endpoints.
+  headers: not documented
+  policy_values: not published
+timestamps:
+  format: ISO 8601 (UTC)
+  example: '2024-12-10T15:30:45.402Z'
+content_type:
+  request: application/json (Accept)
+  response: application/json
+field_conventions:
+  identifiers: UUID strings (id, campaign_id, simulation_id, enrollment_id, scenario_id)
+  naming: snake_case field names
+  expansion: not supported
+  sparse_fieldsets: not supported
+  metadata: not supported

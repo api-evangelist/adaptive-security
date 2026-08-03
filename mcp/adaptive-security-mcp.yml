@@ -1,0 +1,59 @@
+generated: '2026-07-17'
+method: derived
+status: candidate
+source: openapi/adaptive-security-openapi.json
+notes: >-
+  No official hosted/remote Adaptive Security MCP server was found (docs, npm
+  @modelcontextprotocol, MCP registries). This is a CANDIDATE tool list derived
+  one-to-one from the 15 read-only operations of the Adaptive API v2 — a
+  starting point for an MCP server, not a published one.
+server:
+  name: adaptive-security
+  transport: http
+  auth: bearer-token
+tools:
+- name: list_users
+  description: List users.
+  source_operation: openapi/adaptive-security-openapi.json#listUsers
+- name: get_user
+  description: Get user details.
+  source_operation: openapi/adaptive-security-openapi.json#getUser
+- name: list_groups
+  description: List groups.
+  source_operation: openapi/adaptive-security-openapi.json#listGroups
+- name: get_group
+  description: Get group details.
+  source_operation: openapi/adaptive-security-openapi.json#getGroup
+- name: get_group_members
+  description: Get group users.
+  source_operation: openapi/adaptive-security-openapi.json#getGroupMembers
+- name: list_training_campaigns
+  description: List training campaigns.
+  source_operation: openapi/adaptive-security-openapi.json#listTrainingCampaigns
+- name: get_training_campaign
+  description: Get training campaign details.
+  source_operation: openapi/adaptive-security-openapi.json#getTrainingCampaign
+- name: get_training_campaign_enrollments
+  description: Get training campaign enrollment details.
+  source_operation: openapi/adaptive-security-openapi.json#getTrainingCampaignEnrollments
+- name: list_phishing_campaigns
+  description: List phishing campaigns.
+  source_operation: openapi/adaptive-security-openapi.json#listPhishingCampaigns
+- name: get_phishing_campaign
+  description: Get phishing campaign details.
+  source_operation: openapi/adaptive-security-openapi.json#getPhishingCampaign
+- name: get_phishing_enrollments
+  description: Get phishing enrollments.
+  source_operation: openapi/adaptive-security-openapi.json#getPhishingEnrollments
+- name: list_campaign_simulations
+  description: List simulations for a phishing campaign.
+  source_operation: openapi/adaptive-security-openapi.json#listCampaignSimulations
+- name: get_simulation
+  description: Get simulation execution details.
+  source_operation: openapi/adaptive-security-openapi.json#getSimulation
+- name: list_audit_logs
+  description: List audit logs.
+  source_operation: openapi/adaptive-security-openapi.json#listAuditLogs
+- name: get_audit_log
+  description: Get audit log details.
+  source_operation: openapi/adaptive-security-openapi.json#getAuditLog
