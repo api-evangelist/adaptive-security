@@ -2,11 +2,9 @@ generated: '2026-07-17'
 method: derived
 status: candidate
 source: openapi/adaptive-security-openapi.json
-notes: >-
-  No official hosted/remote Adaptive Security MCP server was found (docs, npm
-  @modelcontextprotocol, MCP registries). This is a CANDIDATE tool list derived
-  one-to-one from the 15 read-only operations of the Adaptive API v2 — a
-  starting point for an MCP server, not a published one.
+notes: No official hosted/remote Adaptive Security MCP server was found (docs, npm @modelcontextprotocol,
+  MCP registries). This is a CANDIDATE tool list derived one-to-one from the 15 read-only operations of
+  the Adaptive API v2 — a starting point for an MCP server, not a published one.
 server:
   name: adaptive-security
   transport: http
@@ -57,3 +55,9 @@ tools:
 - name: get_audit_log
   description: Get audit log details.
   source_operation: openapi/adaptive-security-openapi.json#getAuditLog
+deployment:
+  mode: none
+  verified: derived
+  tools: 15
+  checked: '2026-08-12'
+  source: catalog MCP census

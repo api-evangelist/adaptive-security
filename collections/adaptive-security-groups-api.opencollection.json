@@ -1,0 +1,99 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Adaptive Audit Logs Groups API",
+    "version": "v2"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Groups",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List groups",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/groups",
+            "params": [
+              {
+                "name": "page_after",
+                "value": "456e7890-f12b-34c5-d678-901234567890",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "50",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of user groups"
+        },
+        {
+          "info": {
+            "name": "Get group details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/groups/:groupId",
+            "params": [
+              {
+                "name": "groupId",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "type": "path",
+                "description": "Group ID"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve detailed information about a specific group"
+        },
+        {
+          "info": {
+            "name": "Get group users",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/groups/:groupId/users",
+            "params": [
+              {
+                "name": "groupId",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "type": "path",
+                "description": "Group ID"
+              },
+              {
+                "name": "page_after",
+                "value": "456e7890-f12b-34c5-d678-901234567890",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "100",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of users in a specific group"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

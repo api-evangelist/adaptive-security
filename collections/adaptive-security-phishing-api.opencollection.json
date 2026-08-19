@@ -1,0 +1,161 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Adaptive Audit Logs Phishing API",
+    "version": "v2"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Phishing",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List phishing campaigns",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/phishing/campaigns",
+            "params": [
+              {
+                "name": "page_after",
+                "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "50",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of phishing campaigns"
+        },
+        {
+          "info": {
+            "name": "Get phishing enrollments",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/phishing/campaigns/enrollments",
+            "params": [
+              {
+                "name": "user_id",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "type": "query",
+                "description": "User ID"
+              },
+              {
+                "name": "campaign_id",
+                "value": "f3c7c8f3-1234-5678-9abc-def012345678",
+                "type": "query",
+                "description": "Phishing campaign ID"
+              },
+              {
+                "name": "simulation_id",
+                "value": "c18f4e0b-5678-9abc-def0-123456789abc",
+                "type": "query",
+                "description": "Simulation execution ID"
+              },
+              {
+                "name": "page_after",
+                "value": "f248c6c3-9c93-4d62-a41b-9843de18f56b",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "50",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve details about phishing enrollments with campaign, simulation, and user filters"
+        },
+        {
+          "info": {
+            "name": "Get phishing campaign details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/phishing/campaigns/:campaignId",
+            "params": [
+              {
+                "name": "campaignId",
+                "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "type": "path",
+                "description": "Campaign ID"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve detailed information about a specific phishing campaign including simulation summary"
+        },
+        {
+          "info": {
+            "name": "List simulations for campaign",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/phishing/campaigns/:campaignId/simulations",
+            "params": [
+              {
+                "name": "campaignId",
+                "value": "3d65f3b0-9abc-def0-1234-56789abcdef0",
+                "type": "path",
+                "description": "Campaign ID"
+              },
+              {
+                "name": "page_after",
+                "value": "c18f4e0b-dddd-eeee-ffff-0fb2",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "50",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of simulation executions for a specific campaign"
+        },
+        {
+          "info": {
+            "name": "Get simulation execution details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/phishing/simulations/:simulationId",
+            "params": [
+              {
+                "name": "simulationId",
+                "value": "c18f4e0b-dddd-eeee-ffff-0fb2",
+                "type": "path",
+                "description": "Simulation Execution ID"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve detailed information about a specific simulation execution"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

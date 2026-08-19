@@ -1,0 +1,68 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Adaptive Audit Logs Users API",
+    "version": "v2"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Users",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List users",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/users",
+            "params": [
+              {
+                "name": "page_after",
+                "value": "0e3fbf7d-5b97-4aa9-9739-fac5c47a7f26",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "100",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of users"
+        },
+        {
+          "info": {
+            "name": "Get user details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/users/:userId",
+            "params": [
+              {
+                "name": "userId",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "type": "path",
+                "description": "User ID"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve detailed information about a specific user"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

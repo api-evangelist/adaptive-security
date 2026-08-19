@@ -1,0 +1,105 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Adaptive Audit Logs Training API",
+    "version": "v2"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Training",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List training campaigns",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/training/campaigns",
+            "params": [
+              {
+                "name": "page_after",
+                "value": "6e8e3c89-1122-4db2-ae91-f2c6bc0d5639",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "100",
+                "type": "query",
+                "description": "Page size"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of training campaigns"
+        },
+        {
+          "info": {
+            "name": "Get training campaign enrollments details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/training/campaigns/enrollments",
+            "params": [
+              {
+                "name": "user_id",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "type": "query",
+                "description": "User ID"
+              },
+              {
+                "name": "campaign_id",
+                "value": "c143c964-d39b-4f0f-b3d3-07bb3aaae71e",
+                "type": "query",
+                "description": "Training campaign ID"
+              },
+              {
+                "name": "page_after",
+                "value": "f248c6c3-9c93-4d62-a41b-9843de18f56b",
+                "type": "query",
+                "description": "Page cursor"
+              },
+              {
+                "name": "page_size",
+                "value": "100",
+                "type": "query",
+                "description": "Number of enrollments to return per page (max 1000)"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve details about training enrollments with campaign and user filters"
+        },
+        {
+          "info": {
+            "name": "Get training campaign details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/training/campaigns/:campaignId",
+            "params": [
+              {
+                "name": "campaignId",
+                "value": "e7f89a36-4b8f-4865-b11a-b0f280ae6a34",
+                "type": "path",
+                "description": "Campaign ID"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve detailed information about a specific training campaign"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

@@ -1,0 +1,86 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Adaptive Audit Logs API",
+    "version": "v2"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Audit Logs",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List audit logs",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/audit-logs",
+            "params": [
+              {
+                "name": "page_after",
+                "value": "456e7890-f12b-34c5-d678-901234567890",
+                "type": "query",
+                "description": "Page cursor for pagination"
+              },
+              {
+                "name": "page_size",
+                "value": "100",
+                "type": "query",
+                "description": "Number of results per page (max 1000)"
+              },
+              {
+                "name": "start_date",
+                "value": "2024-01-01T00:00:00Z",
+                "type": "query",
+                "description": "Filter audit logs from this date (inclusive, ISO 8601 format)"
+              },
+              {
+                "name": "end_date",
+                "value": "2024-12-31T23:59:59Z",
+                "type": "query",
+                "description": "Filter audit logs until this date (inclusive, ISO 8601 format)"
+              },
+              {
+                "name": "actions",
+                "value": "CREATED_TRAINING_CAMPAIGN,SCHEDULED_TRAINING_CAMPAIGN",
+                "type": "query",
+                "description": "Filter by specific action types (e.g., CREATED_TRAINING_CAMPAIGN, SCHEDULED_TRAINING_CAMPAIGN, ADDED_ADMIN)"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve a paginated list of admin audit logs. Supports filtering by date range and action types."
+        },
+        {
+          "info": {
+            "name": "Get audit log details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.adaptivesecurity.com/v2/audit-logs/:auditLogId",
+            "params": [
+              {
+                "name": "auditLogId",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "type": "path",
+                "description": "Audit log ID"
+              }
+            ]
+          },
+          "docs": "<span style=\"background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-right: 8px;\">BETA</span>Retrieve detailed information about a specific audit log entry"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
