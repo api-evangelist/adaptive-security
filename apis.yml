@@ -85,6 +85,8 @@ apis:
   humanURL: https://developer.adaptivesecurity.com/
   baseURL: https://api.adaptivesecurity.com
   tags:
+  - Group
+  tags_raw:
   - Groups
   properties:
   - type: OpenAPI
@@ -178,6 +180,8 @@ apis:
   humanURL: https://developer.adaptivesecurity.com/
   baseURL: https://api.adaptivesecurity.com
   tags:
+  - User
+  tags_raw:
   - Users
   properties:
   - type: OpenAPI
