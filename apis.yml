@@ -223,6 +223,14 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Login
+  url: https://admin.adaptivesecurity.com/
+- type: ChangeLog
+  url: https://www.adaptivesecurity.com/resources/product-updates
+- type: Plans
+  url: plans/adaptive-security-plans-pricing.yml
+- type: Webhooks
+  url: asyncapi/adaptive-security-webhooks.yml
 # --- identity / link properties (verified live) ---
 - type: Website
   url: https://www.adaptivesecurity.com/

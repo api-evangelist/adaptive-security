@@ -1,0 +1,26 @@
+generated: '2026-09-07'
+method: searched
+source: https://www.adaptivesecurity.com/pricing
+plan_count: 0
+plans: []
+model:
+  structure: per seat, per year
+  quote_only: true
+  packaging: Products can be purchased individually or bundled together
+  products:
+  - Security Awareness Training
+  - Cloud Email Security
+  - AI Governance
+  statement: 'Our pricing varies based on your unique environment and security needs. Fill out our form to receive a custom quote.'
+  paths_to_price: [pricing contact form, book a demo, sales chat]
+api_pricing:
+  metered: false
+  separate_sku: false
+  note: 'No API-specific pricing, quota or add-on is published. The API announcement addresses
+    existing customers and access is governed by role-based access control inside an existing
+    subscription, so API access appears to be a feature of the platform rather than a priced line
+    item — but Adaptive does not state this explicitly.'
+note: 'Adaptive publishes no pricing tiers, no prices, no currency and no included quota. The
+  pricing page is a quote-request form. plan_count is 0 because there is genuinely nothing
+  published to record — an enterprise contact-sales model, not a gap in this pass.'
+verified: '2026-09-07'

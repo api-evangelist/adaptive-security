@@ -1,0 +1,94 @@
+generated: '2026-09-07'
+method: derived
+source: openapi/adaptivesecurity83b8-openapi.json (OpenAPI 3.1 `webhooks` block + the Webhooks tag description)
+asyncapi_published: false
+asyncapi_note: 'Adaptive publishes no AsyncAPI document. The event surface is declared natively in
+  their OpenAPI 3.1 `webhooks` object — nine event types with full CloudEvents envelope schemas —
+  so this catalog is derived from that contract rather than fabricated as an AsyncAPI.'
+surface:
+  kind: outbound-webhooks
+  direction: provider-to-consumer
+  transport: HTTPS POST to a subscriber-configured endpoint
+  content_type: application/json
+  envelope: CloudEvents 1.0
+  envelope_note: 'Event-specific payload is at `data.payload`; subscription metadata is echoed at
+    `data.customdata`. `source` is always `/adaptive`. `subject` is reserved and currently never set.'
+  announced: '2026-08-12'
+  announced_source: https://www.adaptivesecurity.com/resources/product-updates
+  announced_entry: 'New Release: Outbound Webhooks'
+delivery:
+  guarantee: at-least-once
+  dedupe_on: envelope `id` (stable across retries)
+  ordering: not guaranteed — order on the envelope `time` field, not arrival time
+  ack: any 2xx within 10 seconds
+  retries: 4 retries (5 attempts total)
+  retry_delays: [1 minute, 15 minutes, 1 hour, 6 hours]
+  retry_jitter: up to 50%
+  retried_on: [timeout, connection error, '408', '429', '5xx except 501']
+  permanent_failure_on: ['1xx', '3xx', 'other 4xx', '501']
+  backpressure: 'A 429 always pauses all deliveries to the endpoint. A 503 does the same when it
+    carries a valid Retry-After (delay seconds or HTTP date). Cooldown is at least one minute and
+    never shorter than the current retry delay or a valid Retry-After.'
+security:
+  signature_header: X-Adaptive-Signature
+  signature_format: 't=<unix seconds>,v1=<hex hmac>'
+  algorithm: HMAC-SHA256
+  signed_payload: '{id}.{t}.{body} — envelope id, header timestamp and exact raw request body joined with periods'
+  key: the endpoint's signing secret, used as literal characters (not hex-decoded)
+  replay_guard: 'Provider reference implementation rejects timestamps more than 300 seconds from now.'
+  rotation: 'During secret rotation a delivery may carry multiple v1 signatures; accept if any matches.'
+  verification_sample_published: true
+subscriptions:
+  filtering: true
+  note: A subscription can narrow an event type to specific resources; filtering on a recurring phishing campaign matches every simulation run in the series.
+events:
+- type: training.completed
+  summary: A user finished a training campaign — every assigned module completed and every assigned policy accepted.
+  cardinality: once per user per campaign
+  time_semantics: envelope time is the completion time
+  filters: [campaign]
+  schema: WebhookEnvelopeTrainingCompletedPayload
+- type: training.module.completed
+  summary: A user completed one assigned module within a training campaign.
+  time_semantics: envelope time is the module completion time
+  filters: [campaign]
+  schema: WebhookEnvelopeTrainingModuleCompletedPayload
+- type: training.enrollment.created
+  summary: A user was enrolled in a training campaign — by schedule, by joining the campaign audience, by a triggered rule (e.g. phishing failure remediation), or manually by an admin.
+  cardinality: once per enrollment episode; re-enrollment fires again
+  filters: [campaign]
+  schema: WebhookEnvelopeTrainingEnrollmentCreatedPayload
+- type: training.overdue
+  summary: A user's training campaign assignment passed its due date without completion.
+  cardinality: once per user per campaign
+  time_semantics: envelope time is when Adaptive detected the user was overdue
+  filters: [campaign]
+  schema: WebhookEnvelopeTrainingOverduePayload
+- type: phishing.simulation.failed
+  summary: A user failed a phishing simulation by performing the simulation's attack-vector action, such as clicking the link or entering credentials.
+  cardinality: once per user per campaign; repeat interactions do not produce additional events
+  filters: [attack_vector, campaign]
+  filter_values:
+    attack_vector: [ATTACHMENT_OPENED, CREDENTIALS_ENTERED, LINK_CLICKED, PHISHING_DEEP_FAKE_PLAYED, PHONE_NUMBER_CALLED, QR_CODE_SCANNED, TEXT_REPLIED, VOICE_REQUEST_COMPLIED]
+  schema: WebhookEnvelopePhishingSimulationFailedPayload
+- type: phishing.simulation.reported
+  summary: A user reported an Adaptive phishing simulation.
+  cardinality: once per report; reporting the same simulation again produces a new event
+  filters: [campaign]
+  schema: WebhookEnvelopePhishingSimulationReportedPayload
+- type: phishing.failure.removed
+  summary: An administrator removed a user's recorded failure for a phishing simulation.
+  compensating_for: phishing.simulation.failed
+  note: 'Reverses a prior phishing.simulation.failed — consumers tracking failure state should clear it for this user and campaign. If the user fails again, a new phishing.simulation.failed is emitted.'
+  filters: [campaign]
+  schema: WebhookEnvelopePhishingFailureRemovedPayload
+- type: user.group.joined
+  summary: A user joined a group. Groups are rule-based, so membership changes whenever user attributes or activity change.
+  note: 'When a newly created group is first computed, every matching user emits a join with due_to_group_creation = true; filter on false to receive only later membership changes.'
+  filters: [due_to_group_creation, group]
+  schema: WebhookEnvelopeUserGroupJoinedPayload
+- type: user.group.left
+  summary: A user left a group — their attributes or activity no longer match the group's rules, or an administrator changed the rules.
+  filters: [group]
+  schema: WebhookEnvelopeUserGroupLeftPayload
+event_count: 9
