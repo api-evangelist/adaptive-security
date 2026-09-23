@@ -1,0 +1,29 @@
+# Front Door AI Index — adaptive-security — 2026-09-17
+# AI vocabulary counted on the provider's root page. Generated; do not edit.
+# `score` is null unless ownership is `own` — see front_door_ai.py.
+front_door_ai:
+  slug: adaptive-security
+  lexicon_version: '1.0'
+  probed_at: '2026-09-17'
+  host: www.adaptivesecurity.com
+  final_host: www.adaptivesecurity.com
+  ownership: own
+  owner: adaptive-security
+  shares_host_with: null
+  inherited_from: null
+  verdict: scored
+  score: 44
+  host_score: 44
+  density: 43.26
+  words: 1017
+  tiers:
+    agentic: 8
+    core: 34
+    model: 2
+  ambiguous: 1
+  top_terms:
+    AI: 34
+    prompts: 6
+    ChatGPT: 2
+    agentic: 2
+    agent: 1
