@@ -584,33 +584,64 @@ paths:
       - Phishing
 components:
   schemas:
-    PhishingSimulationSummaryDto:
+    PhishingCampaignListResponseDto:
       type: object
-      description: Summary information for a phishing simulation execution
+      description: Paginated list of phishing campaigns
       properties:
-        end_date:
+        campaigns:
+          type: array
+          description: List of phishing campaigns
+          items:
+            $ref: '#/components/schemas/PhishingCampaignDto'
+        page_after:
           type: string
-          format: date-time
-          description: End date of this simulation execution
-          example: '2025-08-10T13:19:13.402Z'
-        simulation_id:
+          description: Cursor for the next page
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    PhishingEnrollmentListResponseDto:
+      type: object
+      description: Paginated list of phishing enrollments
+      properties:
+        enrollments:
+          type: array
+          description: List of phishing enrollments
+          items:
+            $ref: '#/components/schemas/PhishingEnrollmentDto'
+        page_after:
           type: string
-          description: Unique identifier for the simulation execution
-          example: c18f4e0b-5678-9abc-def0-123456789abc
-        start_date:
+          description: Cursor for the next page
+          example: f2a3b4c5-d6e7-8901-fabc-d23456789012
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
           type: string
-          format: date-time
-          description: Start date of this simulation execution
-          example: '2025-07-10T13:19:13.402Z'
-        status:
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
           type: string
-          description: Current status of this simulation execution
-          enum:
-          - DRAFT
-          - SCHEDULED
-          - IN_PROGRESS
-          - COMPLETED
-          example: COMPLETED
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
     PhishingCampaignScenarioDto:
       type: object
       description: Phishing campaign scenario information
@@ -658,157 +689,6 @@ components:
           - LOGIN_SPOOF_PAGE
           - DEEPFAKE_SPOOF_PAGE
           example: DEEPFAKE_SPOOF_PAGE
-    PhishingEnrollmentUserDto:
-      type: object
-      description: User information for phishing enrollment
-      properties:
-        email:
-          type: string
-          description: User's email address
-          example: john.smith@example.com
-        id:
-          type: string
-          description: Unique identifier for the user
-          example: 123e4567-e89b-12d3-a456-426614174000
-    PhishingCampaignListResponseDto:
-      type: object
-      description: Paginated list of phishing campaigns
-      properties:
-        campaigns:
-          type: array
-          description: List of phishing campaigns
-          items:
-            $ref: '#/components/schemas/PhishingCampaignDto'
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-    PhishingEnrollmentListResponseDto:
-      type: object
-      description: Paginated list of phishing enrollments
-      properties:
-        enrollments:
-          type: array
-          description: List of phishing enrollments
-          items:
-            $ref: '#/components/schemas/PhishingEnrollmentDto'
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: f2a3b4c5-d6e7-8901-fabc-d23456789012
-    ErrorDetail:
-      type: object
-      description: Field-level validation error details
-      properties:
-        field:
-          type: string
-          description: Field name that failed validation
-          example: email
-        message:
-          type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
-    PhishingCampaignGroupDto:
-      type: object
-      description: Groups associated with the phishing campaign
-      properties:
-        group_id:
-          type: string
-          description: Unique identifier for the group
-          example: 123e4567-e89b-12d3-a456-426614174000
-        name:
-          type: string
-          description: The name of the group
-          example: All Users
-    PhishingCampaignDto:
-      type: object
-      description: Phishing campaign information representing the logical campaign configuration
-      properties:
-        campaign_id:
-          type: string
-          description: Unique identifier for the campaign
-          example: f3c7c8f3-1234-5678-9abc-def012345678
-        created_date:
-          type: string
-          format: date-time
-          description: Campaign creation date
-          example: '2025-06-01T13:19:13.402Z'
-        distribution_interval:
-          type: string
-          description: Interval between scenario distributions within each simulation
-          enum:
-          - ALL_AT_ONCE
-          - DAY
-          - WEEK
-          - TWO_WEEKS
-          - MONTH
-          - THREE_MONTHS
-          example: TWO_WEEKS
-        end_date:
-          type: string
-          format: date-time
-          description: Campaign end date (null for indefinite campaigns)
-          example: '2025-08-10T13:19:13.402Z'
-        groups:
-          type: array
-          description: Groups associated with the campaign
-          items:
-            $ref: '#/components/schemas/PhishingCampaignGroupDto'
-        mode:
-          type: string
-          description: Campaign mode
-          enum:
-          - SCHEDULED
-          - RECURRING
-          example: RECURRING
-        name:
-          type: string
-          description: Name of the phishing campaign
-          example: Quarterly Phish Test
-        recurring_interval:
-          type: string
-          description: Interval for recurring campaigns (only present when mode = RECURRING)
-          enum:
-          - HOUR
-          - WEEK
-          - TWO_WEEKS
-          - MONTH
-          - THREE_MONTHS
-          example: MONTH
-        scenarios:
-          type: array
-          description: Scenarios included in the campaign
-          items:
-            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
-        simulations:
-          type: array
-          description: Summary list of simulation executions for this campaign
-          items:
-            $ref: '#/components/schemas/PhishingSimulationSummaryDto'
-        start_date:
-          type: string
-          format: date-time
-          description: Campaign start date
-          example: '2025-06-10T13:19:13.402Z'
-        status:
-          type: string
-          description: Current status of the campaign
-          enum:
-          - DRAFT
-          - SCHEDULED
-          - IN_PROGRESS
-          - COMPLETED
-          example: IN_PROGRESS
-        target:
-          type: string
-          description: Target audience for the campaign
-          enum:
-          - ALL_USERS
-          - GROUPS
-          example: GROUPS
     PhishingSimulationListResponseDto:
       type: object
       description: Paginated list of phishing simulation executions
@@ -822,54 +702,6 @@ components:
           description: List of simulation executions
           items:
             $ref: '#/components/schemas/PhishingSimulationDto'
-    PhishingSimulationDto:
-      type: object
-      description: Detailed phishing simulation execution information
-      properties:
-        campaign_id:
-          type: string
-          description: Campaign identifier
-          example: 3d65f3b0-9abc-def0-1234-56789abcdef0
-        distribution_interval:
-          type: string
-          description: Interval between scenario distributions for this simulation
-          enum:
-          - ALL_AT_ONCE
-          - DAY
-          - WEEK
-          - TWO_WEEKS
-          - MONTH
-          - THREE_MONTHS
-          example: TWO_WEEKS
-        end_date:
-          type: string
-          format: date-time
-          description: End date of this simulation execution
-          example: '2025-09-10T13:19:13.402Z'
-        scenarios:
-          type: array
-          description: Scenarios snapshot for this specific simulation execution
-          items:
-            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
-        simulation_id:
-          type: string
-          description: Unique identifier for the simulation execution
-          example: c18f4e0b-5678-9abc-def0-123456789abc
-        start_date:
-          type: string
-          format: date-time
-          description: Start date of this simulation execution
-          example: '2025-08-10T13:19:13.402Z'
-        status:
-          type: string
-          description: Current status of this simulation execution
-          enum:
-          - DRAFT
-          - SCHEDULED
-          - IN_PROGRESS
-          - COMPLETED
-          - PAUSED
-          example: IN_PROGRESS
     ErrorResponseDto:
       type: object
       description: Standard error response format for all API errors
@@ -896,38 +728,18 @@ components:
       - message
       - request_id
       - status_code
-    ValidationErrorResponseDto:
+    PhishingCampaignGroupDto:
       type: object
-      description: Error response for validation failures with field-level details
+      description: Groups associated with the phishing campaign
       properties:
-        details:
-          type: array
-          description: List of field-level validation error details
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        error_code:
+        group_id:
           type: string
-          description: Machine-readable error code
-          example: VALIDATION_ERROR
-        message:
+          description: Unique identifier for the group
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
           type: string
-          description: Human-readable error message
-          example: Request validation failed
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 400
-      required:
-      - details
-      - error_code
-      - message
-      - request_id
-      - status_code
+          description: The name of the group
+          example: All Users
     PhishingEnrollmentDto:
       type: object
       description: Phishing enrollment details for a user in a specific simulation execution
@@ -1014,6 +826,194 @@ components:
         user:
           $ref: '#/components/schemas/PhishingEnrollmentUserDto'
           description: User information
+    PhishingEnrollmentUserDto:
+      type: object
+      description: User information for phishing enrollment
+      properties:
+        email:
+          type: string
+          description: User's email address
+          example: john.smith@example.com
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: 123e4567-e89b-12d3-a456-426614174000
+    PhishingSimulationDto:
+      type: object
+      description: Detailed phishing simulation execution information
+      properties:
+        campaign_id:
+          type: string
+          description: Campaign identifier
+          example: 3d65f3b0-9abc-def0-1234-56789abcdef0
+        distribution_interval:
+          type: string
+          description: Interval between scenario distributions for this simulation
+          enum:
+          - ALL_AT_ONCE
+          - DAY
+          - WEEK
+          - TWO_WEEKS
+          - MONTH
+          - THREE_MONTHS
+          example: TWO_WEEKS
+        end_date:
+          type: string
+          format: date-time
+          description: End date of this simulation execution
+          example: '2025-09-10T13:19:13.402Z'
+        scenarios:
+          type: array
+          description: Scenarios snapshot for this specific simulation execution
+          items:
+            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
+        simulation_id:
+          type: string
+          description: Unique identifier for the simulation execution
+          example: c18f4e0b-5678-9abc-def0-123456789abc
+        start_date:
+          type: string
+          format: date-time
+          description: Start date of this simulation execution
+          example: '2025-08-10T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of this simulation execution
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_PROGRESS
+          - COMPLETED
+          - PAUSED
+          example: IN_PROGRESS
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
+    PhishingCampaignDto:
+      type: object
+      description: Phishing campaign information representing the logical campaign configuration
+      properties:
+        campaign_id:
+          type: string
+          description: Unique identifier for the campaign
+          example: f3c7c8f3-1234-5678-9abc-def012345678
+        created_date:
+          type: string
+          format: date-time
+          description: Campaign creation date
+          example: '2025-06-01T13:19:13.402Z'
+        distribution_interval:
+          type: string
+          description: Interval between scenario distributions within each simulation
+          enum:
+          - ALL_AT_ONCE
+          - DAY
+          - WEEK
+          - TWO_WEEKS
+          - MONTH
+          - THREE_MONTHS
+          example: TWO_WEEKS
+        end_date:
+          type: string
+          format: date-time
+          description: Campaign end date (null for indefinite campaigns)
+          example: '2025-08-10T13:19:13.402Z'
+        groups:
+          type: array
+          description: Groups associated with the campaign
+          items:
+            $ref: '#/components/schemas/PhishingCampaignGroupDto'
+        mode:
+          type: string
+          description: Campaign mode
+          enum:
+          - SCHEDULED
+          - RECURRING
+          example: RECURRING
+        name:
+          type: string
+          description: Name of the phishing campaign
+          example: Quarterly Phish Test
+        recurring_interval:
+          type: string
+          description: Interval for recurring campaigns (only present when mode = RECURRING)
+          enum:
+          - HOUR
+          - WEEK
+          - TWO_WEEKS
+          - MONTH
+          - THREE_MONTHS
+          example: MONTH
+        scenarios:
+          type: array
+          description: Scenarios included in the campaign
+          items:
+            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
+        simulations:
+          type: array
+          description: Summary list of simulation executions for this campaign
+          items:
+            $ref: '#/components/schemas/PhishingSimulationSummaryDto'
+        start_date:
+          type: string
+          format: date-time
+          description: Campaign start date
+          example: '2025-06-10T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of the campaign
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_PROGRESS
+          - COMPLETED
+          example: IN_PROGRESS
+        target:
+          type: string
+          description: Target audience for the campaign
+          enum:
+          - ALL_USERS
+          - GROUPS
+          example: GROUPS
+    PhishingSimulationSummaryDto:
+      type: object
+      description: Summary information for a phishing simulation execution
+      properties:
+        end_date:
+          type: string
+          format: date-time
+          description: End date of this simulation execution
+          example: '2025-08-10T13:19:13.402Z'
+        simulation_id:
+          type: string
+          description: Unique identifier for the simulation execution
+          example: c18f4e0b-5678-9abc-def0-123456789abc
+        start_date:
+          type: string
+          format: date-time
+          description: Start date of this simulation execution
+          example: '2025-07-10T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of this simulation execution
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_PROGRESS
+          - COMPLETED
+          example: COMPLETED
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'

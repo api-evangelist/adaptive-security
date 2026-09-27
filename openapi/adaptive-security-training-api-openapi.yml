@@ -318,109 +318,53 @@ paths:
       - Training
 components:
   schemas:
-    UserSummaryDto:
+    UserTrainingCampaignEnrollmentDto:
       type: object
-      description: User summary information
+      description: User's enrollment details for a training campaign
       properties:
-        email:
+        campaign:
+          $ref: '#/components/schemas/TrainingCampaignSummaryDto'
+        completed_at:
           type: string
-          description: User's email address
-          example: john.smith@example.com
+          format: date-time
+          example: '2025-01-01T13:19:13.402Z'
+        due_at:
+          type: string
+          format: date-time
+          description: Date when the user's training completion is due
+          example: '2025-01-08T13:19:13.402Z'
+        enrolled_at:
+          type: string
+          format: date-time
+          example: '2025-01-01T13:19:13.402Z'
+        has_acknowledged_policy:
+          type: boolean
+          example: false
         id:
           type: string
-          description: Unique identifier for the user
-          example: 123e4567-e89b-12d3-a456-426614174000
-    UserTrainingCampaignEnrollmentListDto:
-      type: object
-      properties:
-        enrollments:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserTrainingCampaignEnrollmentDto'
-        page_after:
+          description: Unique identifier for the enrollment
+          example: 6a10d54c-f1bf-4d1d-8864-64bfac9a0c13
+        started_at:
           type: string
-          example: 3b495a63-23f2-4284-82d0-3aa5b5c0c753
-    CampaignGroupDto:
-      type: object
-      properties:
-        id:
+          format: date-time
+          description: Date when user started the training
+          example: '2025-01-01T13:19:13.402Z'
+        status:
           type: string
-          description: Unique identifier for the group
-          example: e7f89a36-4b8f-4865-b11a-b0f280ae6a34
-        name:
+          description: User's enrollment status in the training campaign
+          enum:
+          - IN_PROGRESS
+          - COMPLETED
+          - INCOMPLETE
+          - OVERDUE
+          - UNENROLLED
+          example: IN_PROGRESS
+        unenrolled_at:
           type: string
-          description: The name of the group
-          example: Finance Team
-    ErrorDetail:
-      type: object
-      description: Field-level validation error details
-      properties:
-        field:
-          type: string
-          description: Field name that failed validation
-          example: email
-        message:
-          type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
-    TrainingCampaignListResponseDto:
-      type: object
-      description: Paginated list of training campaigns
-      properties:
-        campaigns:
-          type: array
-          items:
-            $ref: '#/components/schemas/TrainingCampaignDto'
-        page_after:
-          type: string
-          example: 123e4567-e89b-12d3-a456-426614174000
-    ErrorResponseDto:
-      type: object
-      description: Standard error response format for all API errors
-      properties:
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
-        message:
-          type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-      required:
-      - error_code
-      - message
-      - request_id
-      - status_code
-    TrainingCampaignSummaryDto:
-      type: object
-      description: Training campaign information
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the campaign
-          example: e7f89a36-4b8f-4865-b11a-b0f280ae6a34
-        name:
-          type: string
-          description: Name of the training campaign
-          example: Engineering Annual Training
-        employee_title:
-          type:
-          - string
-          - 'null'
-          description: Employee-facing title for the campaign. Null if no employee-facing title is set.
-          example: 2024 Annual Security Training
+          format: date-time
+          example: '2025-01-02T13:19:13.402Z'
+        user:
+          $ref: '#/components/schemas/UserSummaryDto'
     TrainingCampaignDto:
       type: object
       description: Training campaign information
@@ -515,53 +459,109 @@ components:
       - message
       - request_id
       - status_code
-    UserTrainingCampaignEnrollmentDto:
+    TrainingCampaignListResponseDto:
       type: object
-      description: User's enrollment details for a training campaign
+      description: Paginated list of training campaigns
       properties:
-        campaign:
-          $ref: '#/components/schemas/TrainingCampaignSummaryDto'
-        completed_at:
+        campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingCampaignDto'
+        page_after:
           type: string
-          format: date-time
-          example: '2025-01-01T13:19:13.402Z'
-        due_at:
+          example: 123e4567-e89b-12d3-a456-426614174000
+    UserSummaryDto:
+      type: object
+      description: User summary information
+      properties:
+        email:
           type: string
-          format: date-time
-          description: Date when the user's training completion is due
-          example: '2025-01-08T13:19:13.402Z'
-        enrolled_at:
-          type: string
-          format: date-time
-          example: '2025-01-01T13:19:13.402Z'
-        has_acknowledged_policy:
-          type: boolean
-          example: false
+          description: User's email address
+          example: john.smith@example.com
         id:
           type: string
-          description: Unique identifier for the enrollment
-          example: 6a10d54c-f1bf-4d1d-8864-64bfac9a0c13
-        started_at:
+          description: Unique identifier for the user
+          example: 123e4567-e89b-12d3-a456-426614174000
+    UserTrainingCampaignEnrollmentListDto:
+      type: object
+      properties:
+        enrollments:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserTrainingCampaignEnrollmentDto'
+        page_after:
           type: string
-          format: date-time
-          description: Date when user started the training
-          example: '2025-01-01T13:19:13.402Z'
-        status:
+          example: 3b495a63-23f2-4284-82d0-3aa5b5c0c753
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
           type: string
-          description: User's enrollment status in the training campaign
-          enum:
-          - IN_PROGRESS
-          - COMPLETED
-          - INCOMPLETE
-          - OVERDUE
-          - UNENROLLED
-          example: IN_PROGRESS
-        unenrolled_at:
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
           type: string
-          format: date-time
-          example: '2025-01-02T13:19:13.402Z'
-        user:
-          $ref: '#/components/schemas/UserSummaryDto'
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    CampaignGroupDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the group
+          example: e7f89a36-4b8f-4865-b11a-b0f280ae6a34
+        name:
+          type: string
+          description: The name of the group
+          example: Finance Team
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
+    TrainingCampaignSummaryDto:
+      type: object
+      description: Training campaign information
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the campaign
+          example: e7f89a36-4b8f-4865-b11a-b0f280ae6a34
+        name:
+          type: string
+          description: Name of the training campaign
+          example: Engineering Annual Training
+        employee_title:
+          type:
+          - string
+          - 'null'
+          description: Employee-facing title for the campaign. Null if no employee-facing title is set.
+          example: 2024 Annual Security Training
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'

@@ -237,6 +237,89 @@ paths:
       - Users
 components:
   schemas:
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    UserListResponseDto:
+      type: object
+      properties:
+        page_after:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDto'
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
     UserDto:
       type: object
       description: User information
@@ -326,89 +409,6 @@ components:
           - DEACTIVATED
           - EXCLUDED
           example: ACTIVE
-    ErrorDetail:
-      type: object
-      description: Field-level validation error details
-      properties:
-        field:
-          type: string
-          description: Field name that failed validation
-          example: email
-        message:
-          type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
-    ErrorResponseDto:
-      type: object
-      description: Standard error response format for all API errors
-      properties:
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
-        message:
-          type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-      required:
-      - error_code
-      - message
-      - request_id
-      - status_code
-    ValidationErrorResponseDto:
-      type: object
-      description: Error response for validation failures with field-level details
-      properties:
-        details:
-          type: array
-          description: List of field-level validation error details
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: VALIDATION_ERROR
-        message:
-          type: string
-          description: Human-readable error message
-          example: Request validation failed
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 400
-      required:
-      - details
-      - error_code
-      - message
-      - request_id
-      - status_code
-    UserListResponseDto:
-      type: object
-      properties:
-        page_after:
-          type: string
-          example: 123e4567-e89b-12d3-a456-426614174000
-        users:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserDto'
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'

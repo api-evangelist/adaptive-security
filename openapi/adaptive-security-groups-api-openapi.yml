@@ -283,77 +283,6 @@ paths:
       - Groups
 components:
   schemas:
-    GroupUserDto:
-      type: object
-      description: User information within a group
-      properties:
-        email:
-          type: string
-          description: User email address
-          example: john@example.com
-        id:
-          type: string
-          description: Unique identifier for the user
-          example: 615d6dd4-0045-48f8-90a9-6aba093b7676
-        joined_at:
-          type: string
-          format: date-time
-          description: Date when the user joined the group
-          example: '2025-04-02T15:02:38.000Z'
-    ErrorDetail:
-      type: object
-      description: Field-level validation error details
-      properties:
-        field:
-          type: string
-          description: Field name that failed validation
-          example: email
-        message:
-          type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
-    GroupUsersResponseDto:
-      type: object
-      description: Paginated list of users in a group
-      properties:
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: 615d6dd4-0045-48f8-90a9-6aba093b7676
-        users:
-          type: array
-          description: List of users in the group
-          items:
-            $ref: '#/components/schemas/GroupUserDto'
-    ErrorResponseDto:
-      type: object
-      description: Standard error response format for all API errors
-      properties:
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
-        message:
-          type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-      required:
-      - error_code
-      - message
-      - request_id
-      - status_code
     ValidationErrorResponseDto:
       type: object
       description: Error response for validation failures with field-level details
@@ -386,6 +315,47 @@ components:
       - message
       - request_id
       - status_code
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
     GroupDto:
       type: object
       description: User group information
@@ -423,6 +393,36 @@ components:
           - NEW_HIRE
           - REMEDIATION
           example: GENERAL
+    GroupUserDto:
+      type: object
+      description: User information within a group
+      properties:
+        email:
+          type: string
+          description: User email address
+          example: john@example.com
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: 615d6dd4-0045-48f8-90a9-6aba093b7676
+        joined_at:
+          type: string
+          format: date-time
+          description: Date when the user joined the group
+          example: '2025-04-02T15:02:38.000Z'
+    GroupUsersResponseDto:
+      type: object
+      description: Paginated list of users in a group
+      properties:
+        page_after:
+          type: string
+          description: Cursor for the next page
+          example: 615d6dd4-0045-48f8-90a9-6aba093b7676
+        users:
+          type: array
+          description: List of users in the group
+          items:
+            $ref: '#/components/schemas/GroupUserDto'
     GroupListResponseDto:
       type: object
       description: Paginated list of groups
