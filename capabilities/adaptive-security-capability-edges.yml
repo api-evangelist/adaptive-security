@@ -1,0 +1,35 @@
+slug: adaptive-security
+provider: Adaptive Security
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 2
+edges:
+- tag: Phishing
+  spec_file: adaptive-security-phishing-api-openapi.yml
+  capability_id: BC-620.60
+  capability_id_l1: BC-620
+  capability_name: Security Awareness Management
+  confidence: 0.92
+  evidence: GET /v2/phishing/campaigns listPhishingCampaigns List phishing campaigns; PhishingSimulationDto
+  reason: Operations manage phishing simulation campaigns, enrolments and simulation executions, which
+    is precisely security awareness management (awareness training, phishing simulations) on this human-security
+    platform.
+- tag: Training
+  spec_file: adaptive-security-training-api-openapi.yml
+  capability_id: BC-620.60
+  capability_id_l1: BC-620
+  capability_name: Security Awareness Management
+  confidence: 0.82
+  evidence: GET /v2/training/campaigns listTrainingCampaigns; UserTrainingCampaignEnrollmentDto
+  reason: Training campaigns and per-user enrolments on a vendor whose product is 'interactive security
+    awareness training' — security awareness management rather than general L&D, though a generic learning
+    reading is conceivable.
