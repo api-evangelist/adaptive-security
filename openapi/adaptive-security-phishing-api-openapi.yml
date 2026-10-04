@@ -584,251 +584,6 @@ paths:
       - Phishing
 components:
   schemas:
-    PhishingSimulationDto:
-      type: object
-      description: Detailed phishing simulation execution information
-      properties:
-        campaign_id:
-          type: string
-          description: Campaign identifier
-          example: 3d65f3b0-9abc-def0-1234-56789abcdef0
-        distribution_interval:
-          type: string
-          description: Interval between scenario distributions for this simulation
-          enum:
-          - ALL_AT_ONCE
-          - DAY
-          - WEEK
-          - TWO_WEEKS
-          - MONTH
-          - THREE_MONTHS
-          example: TWO_WEEKS
-        end_date:
-          type: string
-          format: date-time
-          description: End date of this simulation execution
-          example: '2025-09-10T13:19:13.402Z'
-        scenarios:
-          type: array
-          description: Scenarios snapshot for this specific simulation execution
-          items:
-            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
-        simulation_id:
-          type: string
-          description: Unique identifier for the simulation execution
-          example: c18f4e0b-5678-9abc-def0-123456789abc
-        start_date:
-          type: string
-          format: date-time
-          description: Start date of this simulation execution
-          example: '2025-08-10T13:19:13.402Z'
-        status:
-          type: string
-          description: Current status of this simulation execution
-          enum:
-          - DRAFT
-          - SCHEDULED
-          - IN_PROGRESS
-          - COMPLETED
-          - PAUSED
-          example: IN_PROGRESS
-    ErrorResponseDto:
-      type: object
-      description: Standard error response format for all API errors
-      properties:
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
-        message:
-          type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-      required:
-      - error_code
-      - message
-      - request_id
-      - status_code
-    PhishingCampaignScenarioDto:
-      type: object
-      description: Phishing campaign scenario information
-      properties:
-        attack_vector:
-          type: string
-          description: User action for the scenario
-          enum:
-          - LINK_CLICKED
-          - TEXT_REPLIED
-          - PHONE_NUMBER_CALLED
-          example: LINK_CLICKED
-        channel:
-          type: string
-          description: Notification channel for the scenario
-          enum:
-          - EMAIL
-          - TEXT
-          - INBOUND_PHONE_CALL
-          example: EMAIL
-        difficulty:
-          type: string
-          description: Difficulty level of the scenario
-          enum:
-          - EASY
-          - MEDIUM
-          - HARD
-          example: HARD
-        name:
-          type: string
-          description: Name of the phishing scenario
-          example: Zoom Deepfake
-        scenario_id:
-          type: string
-          description: Unique identifier for the scenario
-          example: s-zoom-123
-        sender:
-          type: string
-          description: Sender of the phishing email
-          example: Zoom
-        spoof_page_type:
-          type: string
-          description: Spoof page type for the scenario
-          enum:
-          - LOGIN_SPOOF_PAGE
-          - DEEPFAKE_SPOOF_PAGE
-          example: DEEPFAKE_SPOOF_PAGE
-    PhishingSimulationListResponseDto:
-      type: object
-      description: Paginated list of phishing simulation executions
-      properties:
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: c18f4e0b-dddd-eeee-ffff-0fb2
-        simulations:
-          type: array
-          description: List of simulation executions
-          items:
-            $ref: '#/components/schemas/PhishingSimulationDto'
-    PhishingCampaignDto:
-      type: object
-      description: Phishing campaign information representing the logical campaign configuration
-      properties:
-        campaign_id:
-          type: string
-          description: Unique identifier for the campaign
-          example: f3c7c8f3-1234-5678-9abc-def012345678
-        created_date:
-          type: string
-          format: date-time
-          description: Campaign creation date
-          example: '2025-06-01T13:19:13.402Z'
-        distribution_interval:
-          type: string
-          description: Interval between scenario distributions within each simulation
-          enum:
-          - ALL_AT_ONCE
-          - DAY
-          - WEEK
-          - TWO_WEEKS
-          - MONTH
-          - THREE_MONTHS
-          example: TWO_WEEKS
-        end_date:
-          type: string
-          format: date-time
-          description: Campaign end date (null for indefinite campaigns)
-          example: '2025-08-10T13:19:13.402Z'
-        groups:
-          type: array
-          description: Groups associated with the campaign
-          items:
-            $ref: '#/components/schemas/PhishingCampaignGroupDto'
-        mode:
-          type: string
-          description: Campaign mode
-          enum:
-          - SCHEDULED
-          - RECURRING
-          example: RECURRING
-        name:
-          type: string
-          description: Name of the phishing campaign
-          example: Quarterly Phish Test
-        recurring_interval:
-          type: string
-          description: Interval for recurring campaigns (only present when mode = RECURRING)
-          enum:
-          - HOUR
-          - WEEK
-          - TWO_WEEKS
-          - MONTH
-          - THREE_MONTHS
-          example: MONTH
-        scenarios:
-          type: array
-          description: Scenarios included in the campaign
-          items:
-            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
-        simulations:
-          type: array
-          description: Summary list of simulation executions for this campaign
-          items:
-            $ref: '#/components/schemas/PhishingSimulationSummaryDto'
-        start_date:
-          type: string
-          format: date-time
-          description: Campaign start date
-          example: '2025-06-10T13:19:13.402Z'
-        status:
-          type: string
-          description: Current status of the campaign
-          enum:
-          - DRAFT
-          - SCHEDULED
-          - IN_PROGRESS
-          - COMPLETED
-          example: IN_PROGRESS
-        target:
-          type: string
-          description: Target audience for the campaign
-          enum:
-          - ALL_USERS
-          - GROUPS
-          example: GROUPS
-    PhishingEnrollmentUserDto:
-      type: object
-      description: User information for phishing enrollment
-      properties:
-        email:
-          type: string
-          description: User's email address
-          example: john.smith@example.com
-        id:
-          type: string
-          description: Unique identifier for the user
-          example: 123e4567-e89b-12d3-a456-426614174000
-    PhishingCampaignListResponseDto:
-      type: object
-      description: Paginated list of phishing campaigns
-      properties:
-        campaigns:
-          type: array
-          description: List of phishing campaigns
-          items:
-            $ref: '#/components/schemas/PhishingCampaignDto'
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
     ErrorDetail:
       type: object
       description: Field-level validation error details
@@ -844,18 +599,18 @@ components:
       required:
       - field
       - message
-    PhishingCampaignGroupDto:
+    PhishingEnrollmentUserDto:
       type: object
-      description: Groups associated with the phishing campaign
+      description: User information for phishing enrollment
       properties:
-        group_id:
+        email:
           type: string
-          description: Unique identifier for the group
+          description: User's email address
+          example: john.smith@example.com
+        id:
+          type: string
+          description: Unique identifier for the user
           example: 123e4567-e89b-12d3-a456-426614174000
-        name:
-          type: string
-          description: The name of the group
-          example: All Users
     PhishingEnrollmentDto:
       type: object
       description: Phishing enrollment details for a user in a specific simulation execution
@@ -942,6 +697,67 @@ components:
         user:
           $ref: '#/components/schemas/PhishingEnrollmentUserDto'
           description: User information
+    PhishingEnrollmentListResponseDto:
+      type: object
+      description: Paginated list of phishing enrollments
+      properties:
+        enrollments:
+          type: array
+          description: List of phishing enrollments
+          items:
+            $ref: '#/components/schemas/PhishingEnrollmentDto'
+        page_after:
+          type: string
+          description: Cursor for the next page
+          example: f2a3b4c5-d6e7-8901-fabc-d23456789012
+    PhishingSimulationDto:
+      type: object
+      description: Detailed phishing simulation execution information
+      properties:
+        campaign_id:
+          type: string
+          description: Campaign identifier
+          example: 3d65f3b0-9abc-def0-1234-56789abcdef0
+        distribution_interval:
+          type: string
+          description: Interval between scenario distributions for this simulation
+          enum:
+          - ALL_AT_ONCE
+          - DAY
+          - WEEK
+          - TWO_WEEKS
+          - MONTH
+          - THREE_MONTHS
+          example: TWO_WEEKS
+        end_date:
+          type: string
+          format: date-time
+          description: End date of this simulation execution
+          example: '2025-09-10T13:19:13.402Z'
+        scenarios:
+          type: array
+          description: Scenarios snapshot for this specific simulation execution
+          items:
+            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
+        simulation_id:
+          type: string
+          description: Unique identifier for the simulation execution
+          example: c18f4e0b-5678-9abc-def0-123456789abc
+        start_date:
+          type: string
+          format: date-time
+          description: Start date of this simulation execution
+          example: '2025-08-10T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of this simulation execution
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_PROGRESS
+          - COMPLETED
+          - PAUSED
+          example: IN_PROGRESS
     PhishingSimulationSummaryDto:
       type: object
       description: Summary information for a phishing simulation execution
@@ -969,6 +785,91 @@ components:
           - IN_PROGRESS
           - COMPLETED
           example: COMPLETED
+    PhishingCampaignScenarioDto:
+      type: object
+      description: Phishing campaign scenario information
+      properties:
+        attack_vector:
+          type: string
+          description: User action for the scenario
+          enum:
+          - LINK_CLICKED
+          - TEXT_REPLIED
+          - PHONE_NUMBER_CALLED
+          example: LINK_CLICKED
+        channel:
+          type: string
+          description: Notification channel for the scenario
+          enum:
+          - EMAIL
+          - TEXT
+          - INBOUND_PHONE_CALL
+          example: EMAIL
+        difficulty:
+          type: string
+          description: Difficulty level of the scenario
+          enum:
+          - EASY
+          - MEDIUM
+          - HARD
+          example: HARD
+        name:
+          type: string
+          description: Name of the phishing scenario
+          example: Zoom Deepfake
+        scenario_id:
+          type: string
+          description: Unique identifier for the scenario
+          example: s-zoom-123
+        sender:
+          type: string
+          description: Sender of the phishing email
+          example: Zoom
+        spoof_page_type:
+          type: string
+          description: Spoof page type for the scenario
+          enum:
+          - LOGIN_SPOOF_PAGE
+          - DEEPFAKE_SPOOF_PAGE
+          example: DEEPFAKE_SPOOF_PAGE
+    PhishingCampaignGroupDto:
+      type: object
+      description: Groups associated with the phishing campaign
+      properties:
+        group_id:
+          type: string
+          description: Unique identifier for the group
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: The name of the group
+          example: All Users
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
     ValidationErrorResponseDto:
       type: object
       description: Error response for validation failures with field-level details
@@ -1001,19 +902,118 @@ components:
       - message
       - request_id
       - status_code
-    PhishingEnrollmentListResponseDto:
+    PhishingCampaignDto:
       type: object
-      description: Paginated list of phishing enrollments
+      description: Phishing campaign information representing the logical campaign configuration
       properties:
-        enrollments:
+        campaign_id:
+          type: string
+          description: Unique identifier for the campaign
+          example: f3c7c8f3-1234-5678-9abc-def012345678
+        created_date:
+          type: string
+          format: date-time
+          description: Campaign creation date
+          example: '2025-06-01T13:19:13.402Z'
+        distribution_interval:
+          type: string
+          description: Interval between scenario distributions within each simulation
+          enum:
+          - ALL_AT_ONCE
+          - DAY
+          - WEEK
+          - TWO_WEEKS
+          - MONTH
+          - THREE_MONTHS
+          example: TWO_WEEKS
+        end_date:
+          type: string
+          format: date-time
+          description: Campaign end date (null for indefinite campaigns)
+          example: '2025-08-10T13:19:13.402Z'
+        groups:
           type: array
-          description: List of phishing enrollments
+          description: Groups associated with the campaign
           items:
-            $ref: '#/components/schemas/PhishingEnrollmentDto'
+            $ref: '#/components/schemas/PhishingCampaignGroupDto'
+        mode:
+          type: string
+          description: Campaign mode
+          enum:
+          - SCHEDULED
+          - RECURRING
+          example: RECURRING
+        name:
+          type: string
+          description: Name of the phishing campaign
+          example: Quarterly Phish Test
+        recurring_interval:
+          type: string
+          description: Interval for recurring campaigns (only present when mode = RECURRING)
+          enum:
+          - HOUR
+          - WEEK
+          - TWO_WEEKS
+          - MONTH
+          - THREE_MONTHS
+          example: MONTH
+        scenarios:
+          type: array
+          description: Scenarios included in the campaign
+          items:
+            $ref: '#/components/schemas/PhishingCampaignScenarioDto'
+        simulations:
+          type: array
+          description: Summary list of simulation executions for this campaign
+          items:
+            $ref: '#/components/schemas/PhishingSimulationSummaryDto'
+        start_date:
+          type: string
+          format: date-time
+          description: Campaign start date
+          example: '2025-06-10T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of the campaign
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_PROGRESS
+          - COMPLETED
+          example: IN_PROGRESS
+        target:
+          type: string
+          description: Target audience for the campaign
+          enum:
+          - ALL_USERS
+          - GROUPS
+          example: GROUPS
+    PhishingCampaignListResponseDto:
+      type: object
+      description: Paginated list of phishing campaigns
+      properties:
+        campaigns:
+          type: array
+          description: List of phishing campaigns
+          items:
+            $ref: '#/components/schemas/PhishingCampaignDto'
         page_after:
           type: string
           description: Cursor for the next page
-          example: f2a3b4c5-d6e7-8901-fabc-d23456789012
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    PhishingSimulationListResponseDto:
+      type: object
+      description: Paginated list of phishing simulation executions
+      properties:
+        page_after:
+          type: string
+          description: Cursor for the next page
+          example: c18f4e0b-dddd-eeee-ffff-0fb2
+        simulations:
+          type: array
+          description: List of simulation executions
+          items:
+            $ref: '#/components/schemas/PhishingSimulationDto'
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'

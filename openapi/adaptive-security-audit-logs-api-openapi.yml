@@ -266,32 +266,21 @@ paths:
       - Audit Logs
 components:
   schemas:
-    ErrorResponseDto:
+    ErrorDetail:
       type: object
-      description: Standard error response format for all API errors
+      description: Field-level validation error details
       properties:
-        error_code:
+        field:
           type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
+          description: Field name that failed validation
+          example: email
         message:
           type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
+          description: Validation error message for this field
+          example: Email address is not valid
       required:
-      - error_code
+      - field
       - message
-      - request_id
-      - status_code
     AuditLogActingAdminDto:
       type: object
       description: Information about the admin who performed the action
@@ -308,34 +297,6 @@ components:
           type: string
           description: Role of the admin
           example: ACCOUNT_OWNER
-    AuditLogListResponseDto:
-      type: object
-      description: Paginated list of admin audit logs
-      properties:
-        audit_logs:
-          type: array
-          description: List of audit log entries
-          items:
-            $ref: '#/components/schemas/AuditLogDto'
-        page_after:
-          type: string
-          description: Cursor for the next page of results. Null if this is the last page
-          example: 456e7890-f12b-34c5-d678-901234567890
-    ErrorDetail:
-      type: object
-      description: Field-level validation error details
-      properties:
-        field:
-          type: string
-          description: Field name that failed validation
-          example: email
-        message:
-          type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
     AuditLogDto:
       type: object
       description: Admin audit log entry
@@ -372,6 +333,19 @@ components:
           type: boolean
           description: Whether the action was successful
           example: true
+    AuditLogListResponseDto:
+      type: object
+      description: Paginated list of admin audit logs
+      properties:
+        audit_logs:
+          type: array
+          description: List of audit log entries
+          items:
+            $ref: '#/components/schemas/AuditLogDto'
+        page_after:
+          type: string
+          description: Cursor for the next page of results. Null if this is the last page
+          example: 456e7890-f12b-34c5-d678-901234567890
     ValidationErrorResponseDto:
       type: object
       description: Error response for validation failures with field-level details
@@ -400,6 +374,32 @@ components:
           example: 400
       required:
       - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
       - error_code
       - message
       - request_id
