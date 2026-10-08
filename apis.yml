@@ -226,6 +226,8 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: RateLimits
+  url: rate-limits/adaptive-security-rate-limits.yml
 - type: CapabilityMap
   url: capabilities/adaptive-security-capability-edges.yml
   name: Adaptive Security Business Capability Map
