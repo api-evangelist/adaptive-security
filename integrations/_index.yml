@@ -15,3 +15,15 @@
   relationship: distribution-channel
   status: not-a-workflow
   arazzo: null
+- slug: adaptive-security-crowdstrike-own
+  label: CrowdStrike (own)
+  partner: crowdstrike
+  partner_name: CrowdStrike (own)
+  type: marketplace
+  marketplace: own
+  channel: partner-built
+  evidence: https://marketplace.crowdstrike.com/listings/adaptive-security-ai-security-awareness-training-and-simulation-platform/
+  source: edge
+  relationship: platform-app
+  status: not-a-workflow
+  arazzo: null
