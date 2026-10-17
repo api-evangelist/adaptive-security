@@ -318,21 +318,17 @@ paths:
       - Training
 components:
   schemas:
-    ErrorDetail:
+    CampaignGroupDto:
       type: object
-      description: Field-level validation error details
       properties:
-        field:
+        id:
           type: string
-          description: Field name that failed validation
-          example: email
-        message:
+          description: Unique identifier for the group
+          example: e7f89a36-4b8f-4865-b11a-b0f280ae6a34
+        name:
           type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
+          description: The name of the group
+          example: Finance Team
     UserTrainingCampaignEnrollmentDto:
       type: object
       description: User's enrollment details for a training campaign
@@ -380,39 +376,32 @@ components:
           example: '2025-01-02T13:19:13.402Z'
         user:
           $ref: '#/components/schemas/UserSummaryDto'
-    UserSummaryDto:
+    TrainingCampaignListResponseDto:
       type: object
-      description: User summary information
+      description: Paginated list of training campaigns
       properties:
-        email:
-          type: string
-          description: User's email address
-          example: john.smith@example.com
-        id:
-          type: string
-          description: Unique identifier for the user
-          example: 123e4567-e89b-12d3-a456-426614174000
-    CampaignGroupDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the group
-          example: e7f89a36-4b8f-4865-b11a-b0f280ae6a34
-        name:
-          type: string
-          description: The name of the group
-          example: Finance Team
-    UserTrainingCampaignEnrollmentListDto:
-      type: object
-      properties:
-        enrollments:
+        campaigns:
           type: array
           items:
-            $ref: '#/components/schemas/UserTrainingCampaignEnrollmentDto'
+            $ref: '#/components/schemas/TrainingCampaignDto'
         page_after:
           type: string
-          example: 3b495a63-23f2-4284-82d0-3aa5b5c0c753
+          example: 123e4567-e89b-12d3-a456-426614174000
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
     TrainingCampaignSummaryDto:
       type: object
       description: Training campaign information
@@ -431,75 +420,6 @@ components:
           - 'null'
           description: Employee-facing title for the campaign. Null if no employee-facing title is set.
           example: 2024 Annual Security Training
-    ValidationErrorResponseDto:
-      type: object
-      description: Error response for validation failures with field-level details
-      properties:
-        details:
-          type: array
-          description: List of field-level validation error details
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: VALIDATION_ERROR
-        message:
-          type: string
-          description: Human-readable error message
-          example: Request validation failed
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 400
-      required:
-      - details
-      - error_code
-      - message
-      - request_id
-      - status_code
-    ErrorResponseDto:
-      type: object
-      description: Standard error response format for all API errors
-      properties:
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
-        message:
-          type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-      required:
-      - error_code
-      - message
-      - request_id
-      - status_code
-    TrainingCampaignListResponseDto:
-      type: object
-      description: Paginated list of training campaigns
-      properties:
-        campaigns:
-          type: array
-          items:
-            $ref: '#/components/schemas/TrainingCampaignDto'
-        page_after:
-          type: string
-          example: 123e4567-e89b-12d3-a456-426614174000
     TrainingCampaignDto:
       type: object
       description: Training campaign information
@@ -562,6 +482,86 @@ components:
           - 'null'
           description: Employee-facing title for the campaign. Null if no employee-facing title is set.
           example: 2024 Annual Security Training
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    UserTrainingCampaignEnrollmentListDto:
+      type: object
+      properties:
+        enrollments:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserTrainingCampaignEnrollmentDto'
+        page_after:
+          type: string
+          example: 3b495a63-23f2-4284-82d0-3aa5b5c0c753
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+    UserSummaryDto:
+      type: object
+      description: User summary information
+      properties:
+        email:
+          type: string
+          description: User's email address
+          example: john.smith@example.com
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: 123e4567-e89b-12d3-a456-426614174000
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
