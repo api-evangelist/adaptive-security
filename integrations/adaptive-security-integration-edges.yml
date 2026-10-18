@@ -2,6 +2,7 @@ generated: '2026-10-13'
 method: searched
 checked:
 - crowdstrike/integrations/crowdstrike-integration-edges.yml
+- google-workspace/integrations/google-workspace-integration-edges.yml
 - https://aws.amazon.com/marketplace/
 marketplace_apps: []
 edges:
@@ -80,5 +81,22 @@ edges:
   listing_count: 1
   detected: '2026-10-14'
   detected_by: mirror-platform-listings.py
+- partner_name: Google Workspace (own)
+  partner: google-workspace
+  partner_match: mirror
+  mirror_match: domain
+  type: marketplace
+  relationship: platform-app
+  direction: third-party
+  channel: partner-built
+  marketplace: own
+  evidence: https://workspace.google.com/marketplace/app/phish_alert/396715444090
+  mirror_of: google-workspace/integrations/google-workspace-integration-edges.yml
+  apps:
+  - Phish Alert
+  listing_count: 1
+  detected: '2026-10-18'
+  detected_by: mirror-platform-listings.py
+  category: Google Workspace app
 source:
 - crowdstrike/integrations/crowdstrike-integration-edges.yml
