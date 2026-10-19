@@ -1,6 +1,158 @@
 openapi: 3.2.0
 info:
-  description: Adaptive API for external integrations.
+  description: 'Adaptive API for external integrations. ## 📊 API Overview
+
+
+    The Adaptive API gives your organization programmatic access to its Adaptive data. Use this RESTful API to report on security awareness training and phishing simulations, sync users and groups with your other systems, review admin activity, and act on email security detections. ### Purpose & Use Cases
+
+
+    This API is designed for:
+
+    - **Compliance Reporting**: Track training completion rates and identify employees with overdue trainings
+
+    - **Progress Monitoring**: Get real-time visibility into individual and team training progress
+
+    - **Data Integration**: Sync training data with your HRIS, BI tools, or custom dashboards
+
+    - **Automated Workflows**: Build alerts and notifications for training milestones or compliance deadlines
+
+
+    ### Technical Design
+
+
+    The API follows REST principles with:
+
+    - Resource-oriented URLs that clearly represent your data
+
+    - Standard HTTP methods
+
+    - JSON responses for easy parsing and integration
+
+    - Consistent error handling with detailed error messages
+
+    - Token-based authentication for secure access
+
+
+    ### Available Resources
+
+
+    | Resource | Purpose | Common Use Cases |
+
+    |----------|---------|------------------|
+
+    | **Users** | Access employee directory data | • Export user lists for reporting
+
+    • Track user status changes
+
+    • Map users to departments |
+
+    | **Groups** | Access user groups and their members | • Map users to the groups campaigns target
+
+    • Sync group membership with your directory or HRIS |
+
+    | **Training** | Monitor training campaigns and progress | • Track campaign completion rates
+
+    • Identify at-risk employees
+
+    • Generate compliance reports |
+
+    | **Phishing** | Monitor phishing campaigns, simulations, and per-user results | • Track click, report, and failure rates
+
+    • Identify users who failed a simulation
+
+    • Report on campaign outcomes |
+
+    | **Audit Logs** | Review admin actions taken in Adaptive | • Send admin activity to your SIEM
+
+    • Review configuration changes for compliance |
+
+    | **Email Security** | Act on detected security events and manage sender rules | • Pull detection details into an investigation
+
+    • Remediate, or undo the remediation of, a malicious email from a SOAR playbook
+
+    • Manage sender allow and deny lists |
+
+    | **Webhooks** | Receive events as they happen instead of polling | • Trigger SIEM detections and SOAR playbooks
+
+    • React to failed simulations, completed or overdue training, and new security events |
+
+
+    ## 🚀 Quick Start Guide
+
+
+    Get started with the Adaptive API in just 3 steps:
+
+
+    ### Step 1: Get Your API Token
+
+    See Authentication for more details on how to generate and use API tokens. ### Step 2: Make Your First API Call
+
+    ```bash
+
+    curl -X GET https://api.adaptivesecurity.com/v2/users \
+
+    -H "Authorization: Bearer YOUR_API_TOKEN"
+
+    ```
+
+
+    ### Step 3: Handle the Response
+
+    ```json
+
+    {
+
+    "users": [
+
+    {
+
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+
+    "email": "john.smith@example.com",
+
+    "first_name": "John",
+
+    "last_name": "Smith",
+
+    "status": "ACTIVE"
+
+    }
+
+    ],
+
+    "page_after": "123e4567-e89b-12d3-a456-426614174000"
+
+    }
+
+    ```
+
+
+    ## 🔐 Authentication
+
+
+    All API endpoints require authentication using an API token:
+
+
+    ```http
+
+    Authorization: Bearer YOUR_API_TOKEN
+
+    ```
+
+
+    **Token Management:**
+
+    - Tokens are generated in the Admin portal under **Settings → API**
+
+    - Tokens have a user-set expiration but can be revoked at any time
+
+    - Store tokens securely - treat them like passwords
+
+
+    **Permissions:**
+
+
+    Tokens are assigned permissions that limit the scope of the actions they can be used to take. You can choose the permissions a token is assigned when it''s created and edit them after creation. Each endpoint''s documentation lists which permissions are required to use it. As a best practice, only grant tokens the permissions they need and nothing more. For example, if only using the API to read data, don''t grant your token `:write`-level permissions.'
   title: Adaptive Phishing API
   version: v2
 servers:
@@ -9,12 +161,15 @@ servers:
 security:
 - bearer-token: []
 tags:
-- description: BETAPhishing campaign and simulation management endpoints
+- description: Phishing campaign and simulation management endpoints
   name: Phishing
 paths:
   /v2/phishing/campaigns:
     get:
-      description: BETARetrieve a paginated list of phishing campaigns
+      description: 'Retrieve a paginated list of phishing campaigns
+
+
+        **Required permission:** `phishing:read`'
       operationId: listPhishingCampaigns
       parameters:
       - description: Page cursor
@@ -59,14 +214,12 @@ paths:
                         name: Google Account Compromise
                         sender: Google
                         difficulty: Easy
-                        spoofPageType: null
                         channel: EMAIL
                         attackVector: LINK_CLICKED
                       - scenario_id: a7b8c9d0-e1f2-3456-abcd-e78901234567
                         name: Internal Audit Feedback
                         sender: Executive
                         difficulty: Medium
-                        spoofPageType: null
                         channel: EMAIL
                         attackVector: QR_CODE_SCANNED
                       mode: RECURRING
@@ -153,7 +306,10 @@ paths:
       - Phishing
   /v2/phishing/campaigns/enrollments:
     get:
-      description: BETARetrieve details about phishing enrollments with campaign, simulation, and user filters
+      description: 'Retrieve details about phishing enrollments with campaign, simulation, and user filters
+
+
+        **Required permission:** `phishing:read`'
       operationId: getPhishingEnrollments
       parameters:
       - description: User ID
@@ -162,28 +318,36 @@ paths:
         name: user_id
         required: false
         schema:
-          type: string
+          type:
+          - string
+          - 'null'
       - description: Phishing campaign ID
         example: f3c7c8f3-1234-5678-9abc-def012345678
         in: query
         name: campaign_id
         required: false
         schema:
-          type: string
+          type:
+          - string
+          - 'null'
       - description: Simulation execution ID
         example: c18f4e0b-5678-9abc-def0-123456789abc
         in: query
         name: simulation_id
         required: false
         schema:
-          type: string
+          type:
+          - string
+          - 'null'
       - description: Page cursor
         example: f248c6c3-9c93-4d62-a41b-9843de18f56b
         in: query
         name: page_after
         required: false
         schema:
-          type: string
+          type:
+          - string
+          - 'null'
       - description: Page size
         example: 50
         in: query
@@ -212,11 +376,7 @@ paths:
                       delivered_at: '2025-06-10T15:02:38.000Z'
                       opened_at: '2025-06-10T15:04:38.000Z'
                       clicked_at: '2025-06-10T15:05:38.000Z'
-                      replied_at: null
-                      attachment_opened_at: null
                       credentials_entered: '2025-06-10T15:07:38.000Z'
-                      qr_code_scanned: null
-                      reported_at: null
                       failed_at: '2025-06-10T15:07:38.000Z'
                       ip: 192.168.1.100
                       ip_location: Philadelphia, PA
@@ -230,13 +390,7 @@ paths:
                       scheduled_at: '2025-07-10T14:30:22.000Z'
                       delivered_at: '2025-07-10T14:30:22.000Z'
                       opened_at: '2025-07-10T14:35:18.000Z'
-                      clicked_at: null
-                      replied_at: null
-                      attachment_opened_at: null
-                      credentials_entered: null
-                      qr_code_scanned: null
                       reported_at: '2025-07-10T14:36:45.000Z'
-                      failed_at: null
                       ip: 192.168.1.100
                       ip_location: Philadelphia, PA
                     - enrollment_id: f2a3b4c5-d6e7-8901-fabc-d23456789012
@@ -250,11 +404,6 @@ paths:
                       delivered_at: '2025-06-15T10:45:12.000Z'
                       opened_at: '2025-06-15T11:22:33.000Z'
                       clicked_at: '2025-06-15T11:23:11.000Z'
-                      replied_at: null
-                      attachment_opened_at: null
-                      credentials_entered: null
-                      qr_code_scanned: null
-                      reported_at: null
                       failed_at: '2025-06-15T11:23:38.000Z'
                       ip: 192.168.1.100
                       ip_location: New York, NY
@@ -309,7 +458,10 @@ paths:
       - Phishing
   /v2/phishing/campaigns/{campaignId}:
     get:
-      description: BETARetrieve detailed information about a specific phishing campaign including simulation summary
+      description: 'Retrieve detailed information about a specific phishing campaign including simulation summary
+
+
+        **Required permission:** `phishing:read`'
       operationId: getPhishingCampaign
       parameters:
       - description: Campaign ID
@@ -352,7 +504,6 @@ paths:
                       name: Internal Audit Feedback
                       sender: Executive
                       difficulty: Medium
-                      spoofPageType: null
                       channel: EMAIL
                       attackVector: QR_CODE_SCANNED
                     mode: RECURRING
@@ -421,7 +572,10 @@ paths:
       - Phishing
   /v2/phishing/campaigns/{campaignId}/simulations:
     get:
-      description: BETARetrieve a paginated list of simulation executions for a specific campaign
+      description: 'Retrieve a paginated list of simulation executions for a specific campaign
+
+
+        **Required permission:** `phishing:read`'
       operationId: listCampaignSimulations
       parameters:
       - description: Campaign ID
@@ -518,7 +672,10 @@ paths:
       - Phishing
   /v2/phishing/simulations/{simulationId}:
     get:
-      description: BETARetrieve detailed information about a specific simulation execution
+      description: 'Retrieve detailed information about a specific simulation execution
+
+
+        **Required permission:** `phishing:read`'
       operationId: getSimulation
       parameters:
       - description: Simulation Execution ID
@@ -584,6 +741,122 @@ paths:
       - Phishing
 components:
   schemas:
+    PhishingCampaignGroupDto:
+      type: object
+      description: Groups associated with the phishing campaign
+      properties:
+        group_id:
+          type: string
+          description: Unique identifier for the group
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: The name of the group
+          example: All Users
+    PhishingSimulationSummaryDto:
+      type: object
+      description: Summary information for a phishing simulation execution
+      properties:
+        end_date:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: End date of this simulation execution
+          example: '2025-08-10T13:19:13.402Z'
+        simulation_id:
+          type: string
+          description: Unique identifier for the simulation execution
+          example: c18f4e0b-5678-9abc-def0-123456789abc
+        start_date:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Start date of this simulation execution
+          example: '2025-07-10T13:19:13.402Z'
+        status:
+          type: string
+          description: Current status of this simulation execution
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_PROGRESS
+          - COMPLETED
+          example: COMPLETED
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+    PhishingSimulationListResponseDto:
+      type: object
+      description: Paginated list of phishing simulation executions
+      properties:
+        page_after:
+          type:
+          - string
+          - 'null'
+          description: Cursor for the next page
+          example: c18f4e0b-dddd-eeee-ffff-0fb2
+        simulations:
+          type: array
+          description: List of simulation executions
+          items:
+            $ref: '#/components/schemas/PhishingSimulationDto'
     PhishingCampaignScenarioDto:
       type: object
       description: Phishing campaign scenario information
@@ -625,27 +898,26 @@ components:
           description: Sender of the phishing email
           example: Zoom
         spoof_page_type:
-          type: string
+          type:
+          - string
+          - 'null'
           description: Spoof page type for the scenario
           enum:
           - LOGIN_SPOOF_PAGE
           - DEEPFAKE_SPOOF_PAGE
           example: DEEPFAKE_SPOOF_PAGE
-    ErrorDetail:
+    PhishingEnrollmentUserDto:
       type: object
-      description: Field-level validation error details
+      description: User information for phishing enrollment
       properties:
-        field:
+        email:
           type: string
-          description: Field name that failed validation
-          example: email
-        message:
+          description: User's email address
+          example: john.smith@example.com
+        id:
           type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
+          description: Unique identifier for the user
+          example: 123e4567-e89b-12d3-a456-426614174000
     PhishingCampaignListResponseDto:
       type: object
       description: Paginated list of phishing campaigns
@@ -656,7 +928,9 @@ components:
           items:
             $ref: '#/components/schemas/PhishingCampaignDto'
         page_after:
-          type: string
+          type:
+          - string
+          - 'null'
           description: Cursor for the next page
           example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
     PhishingCampaignDto:
@@ -684,7 +958,9 @@ components:
           - THREE_MONTHS
           example: TWO_WEEKS
         end_date:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: Campaign end date (null for indefinite campaigns)
           example: '2025-08-10T13:19:13.402Z'
@@ -705,7 +981,9 @@ components:
           description: Name of the phishing campaign
           example: Quarterly Phish Test
         recurring_interval:
-          type: string
+          type:
+          - string
+          - 'null'
           description: Interval for recurring campaigns (only present when mode = RECURRING)
           enum:
           - HOUR
@@ -725,7 +1003,9 @@ components:
           items:
             $ref: '#/components/schemas/PhishingSimulationSummaryDto'
         start_date:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: Campaign start date
           example: '2025-06-10T13:19:13.402Z'
@@ -745,45 +1025,146 @@ components:
           - ALL_USERS
           - GROUPS
           example: GROUPS
-    PhishingEnrollmentUserDto:
+    PhishingEnrollmentDto:
       type: object
-      description: User information for phishing enrollment
+      description: Phishing enrollment details for a user in a specific simulation execution
       properties:
-        email:
+        campaign_id:
           type: string
-          description: User's email address
-          example: john.smith@example.com
-        id:
+          description: Campaign identifier
+          example: 3d65f3b0-9abc-def0-1234-56789abcdef0
+        clicked_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user clicked a link in the email
+          example: '2025-06-10T15:05:38.000Z'
+        credentials_entered_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user entered credentials
+          example: '2025-06-10T15:07:38.000Z'
+        deep_fake_played_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user played the deep fake
+          example: '2025-06-10T15:08:38.000Z'
+        delivered_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the phishing email was delivered
+          example: '2025-06-10T15:02:38.000Z'
+        enrollment_id:
           type: string
-          description: Unique identifier for the user
-          example: 123e4567-e89b-12d3-a456-426614174000
-    PhishingSimulationSummaryDto:
-      type: object
-      description: Summary information for a phishing simulation execution
-      properties:
-        end_date:
+          description: Unique identifier for the enrollment
+          example: d0e1f2a3-b4c5-6789-defa-b01234567890
+        failed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user failed the phishing test
+          example: '2025-06-10T15:07:38.000Z'
+        ip:
+          type:
+          - string
+          - 'null'
+          description: IP address from the failure condition
+          example: 192.168.1.100
+        ip_location:
+          type:
+          - string
+          - 'null'
+          description: Geographic location of the IP address
+          example: Philadelphia, PA
+        opened_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user opened the email
+          example: '2025-06-10T15:04:38.000Z'
+        phone_number_called_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user called the phone number
+          example: '2025-06-10T15:08:38.000Z'
+        qr_code_scanned_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user scanned a QR code
+          example: '2025-06-10T15:08:38.000Z'
+        reported_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the user reported the phishing email
+          example: '2025-06-10T15:09:38.000Z'
+        scenario_id:
+          type: string
+          description: Scenario identifier
+          example: a7b8c9d0-e1f2-3456-abcd-e78901234567
+        scheduled_at:
           type: string
           format: date-time
-          description: End date of this simulation execution
-          example: '2025-08-10T13:19:13.402Z'
+          description: When the phishing email was scheduled to be sent
+          example: '2025-06-10T15:02:38.000Z'
         simulation_id:
           type: string
-          description: Unique identifier for the simulation execution
+          description: Simulation execution identifier
           example: c18f4e0b-5678-9abc-def0-123456789abc
-        start_date:
-          type: string
+        text_replied_at:
+          type:
+          - string
+          - 'null'
           format: date-time
-          description: Start date of this simulation execution
-          example: '2025-07-10T13:19:13.402Z'
-        status:
+          description: When the user replied to the text message
+          example: '2025-06-10T15:06:38.000Z'
+        user:
+          $ref: '#/components/schemas/PhishingEnrollmentUserDto'
+          description: User information
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
           type: string
-          description: Current status of this simulation execution
-          enum:
-          - DRAFT
-          - SCHEDULED
-          - IN_PROGRESS
-          - COMPLETED
-          example: COMPLETED
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
+    PhishingEnrollmentListResponseDto:
+      type: object
+      description: Paginated list of phishing enrollments
+      properties:
+        enrollments:
+          type: array
+          description: List of phishing enrollments
+          items:
+            $ref: '#/components/schemas/PhishingEnrollmentDto'
+        page_after:
+          type:
+          - string
+          - 'null'
+          description: Cursor for the next page
+          example: f2a3b4c5-d6e7-8901-fabc-d23456789012
     PhishingSimulationDto:
       type: object
       description: Detailed phishing simulation execution information
@@ -804,7 +1185,9 @@ components:
           - THREE_MONTHS
           example: TWO_WEEKS
         end_date:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: End date of this simulation execution
           example: '2025-09-10T13:19:13.402Z'
@@ -818,7 +1201,9 @@ components:
           description: Unique identifier for the simulation execution
           example: c18f4e0b-5678-9abc-def0-123456789abc
         start_date:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: Start date of this simulation execution
           example: '2025-08-10T13:19:13.402Z'
@@ -832,188 +1217,6 @@ components:
           - COMPLETED
           - PAUSED
           example: IN_PROGRESS
-    ErrorResponseDto:
-      type: object
-      description: Standard error response format for all API errors
-      properties:
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: RESOURCE_NOT_FOUND
-        message:
-          type: string
-          description: Human-readable error message
-          example: The requested user was not found
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-      required:
-      - error_code
-      - message
-      - request_id
-      - status_code
-    PhishingEnrollmentDto:
-      type: object
-      description: Phishing enrollment details for a user in a specific simulation execution
-      properties:
-        campaign_id:
-          type: string
-          description: Campaign identifier
-          example: 3d65f3b0-9abc-def0-1234-56789abcdef0
-        clicked_at:
-          type: string
-          format: date-time
-          description: When the user clicked a link in the email
-          example: '2025-06-10T15:05:38.000Z'
-        credentials_entered_at:
-          type: string
-          format: date-time
-          description: When the user entered credentials
-          example: '2025-06-10T15:07:38.000Z'
-        deep_fake_played_at:
-          type: string
-          format: date-time
-          description: When the user played the deep fake
-          example: '2025-06-10T15:08:38.000Z'
-        delivered_at:
-          type: string
-          format: date-time
-          description: When the phishing email was delivered
-          example: '2025-06-10T15:02:38.000Z'
-        enrollment_id:
-          type: string
-          description: Unique identifier for the enrollment
-          example: d0e1f2a3-b4c5-6789-defa-b01234567890
-        failed_at:
-          type: string
-          format: date-time
-          description: When the user failed the phishing test
-          example: '2025-06-10T15:07:38.000Z'
-        ip:
-          type: string
-          description: IP address from the failure condition
-          example: 192.168.1.100
-        ip_location:
-          type: string
-          description: Geographic location of the IP address
-          example: Philadelphia, PA
-        opened_at:
-          type: string
-          format: date-time
-          description: When the user opened the email
-          example: '2025-06-10T15:04:38.000Z'
-        phone_number_called_at:
-          type: string
-          format: date-time
-          description: When the user called the phone number
-          example: '2025-06-10T15:08:38.000Z'
-        qr_code_scanned_at:
-          type: string
-          format: date-time
-          description: When the user scanned a QR code
-          example: '2025-06-10T15:08:38.000Z'
-        reported_at:
-          type: string
-          format: date-time
-          description: When the user reported the phishing email
-          example: '2025-06-10T15:09:38.000Z'
-        scenario_id:
-          type: string
-          description: Scenario identifier
-          example: a7b8c9d0-e1f2-3456-abcd-e78901234567
-        scheduled_at:
-          type: string
-          format: date-time
-          description: When the phishing email was scheduled to be sent
-          example: '2025-06-10T15:02:38.000Z'
-        simulation_id:
-          type: string
-          description: Simulation execution identifier
-          example: c18f4e0b-5678-9abc-def0-123456789abc
-        text_replied_at:
-          type: string
-          format: date-time
-          description: When the user replied to the text message
-          example: '2025-06-10T15:06:38.000Z'
-        user:
-          $ref: '#/components/schemas/PhishingEnrollmentUserDto'
-          description: User information
-    ValidationErrorResponseDto:
-      type: object
-      description: Error response for validation failures with field-level details
-      properties:
-        details:
-          type: array
-          description: List of field-level validation error details
-          items:
-            $ref: '#/components/schemas/ErrorDetail'
-        error_code:
-          type: string
-          description: Machine-readable error code
-          example: VALIDATION_ERROR
-        message:
-          type: string
-          description: Human-readable error message
-          example: Request validation failed
-        request_id:
-          type: string
-          description: Unique request ID for debugging
-          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
-        status_code:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 400
-      required:
-      - details
-      - error_code
-      - message
-      - request_id
-      - status_code
-    PhishingEnrollmentListResponseDto:
-      type: object
-      description: Paginated list of phishing enrollments
-      properties:
-        enrollments:
-          type: array
-          description: List of phishing enrollments
-          items:
-            $ref: '#/components/schemas/PhishingEnrollmentDto'
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: f2a3b4c5-d6e7-8901-fabc-d23456789012
-    PhishingCampaignGroupDto:
-      type: object
-      description: Groups associated with the phishing campaign
-      properties:
-        group_id:
-          type: string
-          description: Unique identifier for the group
-          example: 123e4567-e89b-12d3-a456-426614174000
-        name:
-          type: string
-          description: The name of the group
-          example: All Users
-    PhishingSimulationListResponseDto:
-      type: object
-      description: Paginated list of phishing simulation executions
-      properties:
-        page_after:
-          type: string
-          description: Cursor for the next page
-          example: c18f4e0b-dddd-eeee-ffff-0fb2
-        simulations:
-          type: array
-          description: List of simulation executions
-          items:
-            $ref: '#/components/schemas/PhishingSimulationDto'
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'

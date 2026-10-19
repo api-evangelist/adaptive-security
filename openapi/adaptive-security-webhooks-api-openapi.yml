@@ -1,0 +1,2796 @@
+openapi: 3.2.0
+info:
+  description: 'Adaptive API for external integrations. ## 📊 API Overview
+
+
+    The Adaptive API gives your organization programmatic access to its Adaptive data. Use this RESTful API to report on security awareness training and phishing simulations, sync users and groups with your other systems, review admin activity, and act on email security detections. ### Purpose & Use Cases
+
+
+    This API is designed for:
+
+    - **Compliance Reporting**: Track training completion rates and identify employees with overdue trainings
+
+    - **Progress Monitoring**: Get real-time visibility into individual and team training progress
+
+    - **Data Integration**: Sync training data with your HRIS, BI tools, or custom dashboards
+
+    - **Automated Workflows**: Build alerts and notifications for training milestones or compliance deadlines
+
+
+    ### Technical Design
+
+
+    The API follows REST principles with:
+
+    - Resource-oriented URLs that clearly represent your data
+
+    - Standard HTTP methods
+
+    - JSON responses for easy parsing and integration
+
+    - Consistent error handling with detailed error messages
+
+    - Token-based authentication for secure access
+
+
+    ### Available Resources
+
+
+    | Resource | Purpose | Common Use Cases |
+
+    |----------|---------|------------------|
+
+    | **Users** | Access employee directory data | • Export user lists for reporting
+
+    • Track user status changes
+
+    • Map users to departments |
+
+    | **Groups** | Access user groups and their members | • Map users to the groups campaigns target
+
+    • Sync group membership with your directory or HRIS |
+
+    | **Training** | Monitor training campaigns and progress | • Track campaign completion rates
+
+    • Identify at-risk employees
+
+    • Generate compliance reports |
+
+    | **Phishing** | Monitor phishing campaigns, simulations, and per-user results | • Track click, report, and failure rates
+
+    • Identify users who failed a simulation
+
+    • Report on campaign outcomes |
+
+    | **Audit Logs** | Review admin actions taken in Adaptive | • Send admin activity to your SIEM
+
+    • Review configuration changes for compliance |
+
+    | **Email Security** | Act on detected security events and manage sender rules | • Pull detection details into an investigation
+
+    • Remediate, or undo the remediation of, a malicious email from a SOAR playbook
+
+    • Manage sender allow and deny lists |
+
+    | **Webhooks** | Receive events as they happen instead of polling | • Trigger SIEM detections and SOAR playbooks
+
+    • React to failed simulations, completed or overdue training, and new security events |
+
+
+    ## 🚀 Quick Start Guide
+
+
+    Get started with the Adaptive API in just 3 steps:
+
+
+    ### Step 1: Get Your API Token
+
+    See Authentication for more details on how to generate and use API tokens. ### Step 2: Make Your First API Call
+
+    ```bash
+
+    curl -X GET https://api.adaptivesecurity.com/v2/users \
+
+    -H "Authorization: Bearer YOUR_API_TOKEN"
+
+    ```
+
+
+    ### Step 3: Handle the Response
+
+    ```json
+
+    {
+
+    "users": [
+
+    {
+
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+
+    "email": "john.smith@example.com",
+
+    "first_name": "John",
+
+    "last_name": "Smith",
+
+    "status": "ACTIVE"
+
+    }
+
+    ],
+
+    "page_after": "123e4567-e89b-12d3-a456-426614174000"
+
+    }
+
+    ```
+
+
+    ## 🔐 Authentication
+
+
+    All API endpoints require authentication using an API token:
+
+
+    ```http
+
+    Authorization: Bearer YOUR_API_TOKEN
+
+    ```
+
+
+    **Token Management:**
+
+    - Tokens are generated in the Admin portal under **Settings → API**
+
+    - Tokens have a user-set expiration but can be revoked at any time
+
+    - Store tokens securely - treat them like passwords
+
+
+    **Permissions:**
+
+
+    Tokens are assigned permissions that limit the scope of the actions they can be used to take. You can choose the permissions a token is assigned when it''s created and edit them after creation. Each endpoint''s documentation lists which permissions are required to use it. As a best practice, only grant tokens the permissions they need and nothing more. For example, if only using the API to read data, don''t grant your token `:write`-level permissions.'
+  title: Adaptive Webhooks API
+  version: v2
+servers:
+- url: https://api.adaptivesecurity.com
+  description: Production API
+security:
+- bearer-token: []
+tags:
+- description: 'Adaptive can push events to your systems as they happen — a user fails a phishing simulation, completes a training, falls overdue — so you can drive SIEM detections, SOAR playbooks, and downstream workflows without polling.
+
+
+    ## Delivery
+
+
+    Endpoints must use HTTPS. Adaptive rejects `http://` URLs when you create or update an endpoint. Webhook deliveries are encrypted in transit using TLS.
+
+
+    Every delivery is a `POST` request to your endpoint over HTTPS with `Content-Type: application/json`. The body is a CloudEvents 1.0 envelope; the event-specific payload is at `data.payload`, and any custom metadata configured on your subscription is echoed back at `data.customdata`.
+
+
+    Delivery is **at least once**: retries and rare internal races can deliver the same event more than once, so dedupe on the envelope `id`. Failed deliveries — timeouts, connection errors, `408`, `429`, and `5xx` responses other than `501` — are attempted up to five times. The four retry delays have base values of 1 minute, 15 minutes, 1 hour, and 6 hours, each with up to 50% jitter. All other non-`2xx` responses, including `1xx`, `3xx`, other `4xx` responses, and `501`, are permanent failures and are not retried.
+
+
+    A `429` response always pauses all deliveries to your endpoint. A `503` does the same when it includes a valid `Retry-After` value (either delay seconds or an HTTP date). The cooldown is at least one minute and never shorter than either the current retry delay or a valid `Retry-After` value. Respond with any `2xx` status within 10 seconds to acknowledge a delivery.
+
+
+    Events are not guaranteed to arrive in order. Use the envelope `time` field (when the event occurred) rather than arrival time when ordering matters.
+
+
+    ## Verifying signatures
+
+
+    Every delivery carries an `X-Adaptive-Signature` header so you can verify it originated from Adaptive and was not tampered with:
+
+
+    ```
+
+    X-Adaptive-Signature: t=1752692712,v1=5f7c9a2b...
+
+    ```
+
+
+    `t` is the Unix timestamp (seconds) of the delivery attempt and `v1` is a hex-encoded HMAC-SHA256 signature. To verify, recompute the signature over the string `{id}.{t}.{body}` — the envelope `id`, the header timestamp, and the exact raw request body, joined with periods — using your endpoint''s signing secret as the HMAC key (the secret''s literal characters, not hex-decoded):
+
+
+    ```python
+
+    import hashlib, hmac, time
+
+
+    def verify(
+
+    secret: str,
+
+    event_id: str,
+
+    header: str,
+
+    body: bytes,
+
+    tolerance_seconds: int = 300,
+
+    ) -> bool:
+
+    try:
+
+    parts = [part.split("=", 1) for part in header.split(",")]
+
+    timestamps = [
+
+    value for key, value in parts if key == "t"
+
+    ]
+
+    signatures = [
+
+    value for key, value in parts if key == "v1"
+
+    ]
+
+    if len(timestamps) != 1 or not signatures:
+
+    return False
+
+    timestamp = int(timestamps[0])
+
+    except (TypeError, ValueError):
+
+    return False
+
+
+    if abs(int(time.time()) - timestamp) > tolerance_seconds:
+
+    return False
+
+
+    signed = f"{event_id}.{timestamp}.".encode() + body
+
+    expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+
+    return any(
+
+    hmac.compare_digest(expected, signature)
+
+    for signature in signatures
+
+    )
+
+    ```
+
+
+    Read `event_id` from the parsed body, but verify against the exact raw body bytes. The example rejects timestamps more than five minutes in the past or future to guard against replay and clock-skew abuse. During secret rotation a delivery may carry multiple `v1` signatures; accept if any matches.
+
+
+    ## Subscription filters
+
+
+    Subscriptions can narrow an event type to specific resources — for example, only `phishing.simulation.failed` events for one campaign. The filterable fields for each event are listed in its description below. Filtering on a recurring phishing campaign matches every simulation run in the series.'
+  name: Webhooks
+paths: {}
+webhooks:
+  admin.audit_log.created:
+    post:
+      description: A customer admin performed an auditable action.
+      operationId: admin.audit_log.created
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: admin.audit_log.created
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  id: 123e4567-e89b-12d3-a456-426614174000
+                  actor:
+                    id: 7d3f2a1b-9c8e-4d6f-a5b4-3c2d1e0f9a87
+                    email: alex.morgan@example.com
+                    name: Alex Morgan
+                    role: ACCOUNT_OWNER
+                    type: ADMIN
+                  action: CREATED_TRAINING_CAMPAIGN
+                  category: SAT_PROGRAM
+                  subcategory: TRAINING
+                  message: Created training campaign.
+                  entities:
+                  - type: CAMPAIGN
+                    id: a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7
+                    name: Q3 Security Essentials
+                  success: true
+                  client_info:
+                    ip: 203.0.113.42
+                    browser: Chrome
+                    browser_version: '125'
+                    os: macOS
+                    os_version: '14.5'
+                    device: Mac
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeAdminAuditLogCreatedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: admin.audit_log.created
+      tags:
+      - Webhooks
+  ai_governance.policy.accepted:
+    post:
+      description: 'A user accepted an AI Governance policy: they followed the policy instead of continuing restricted actions.
+
+
+        **Subscription filters**
+
+
+        - `policy` — filter to specific policy ids
+
+        - `product` — one of: `ABACUS_CHAT`, `CANVA_CHAT`, `CHATGPT_AGENTS`, `CHATGPT_CHAT`, `CHATGPT_CODEX`, `CLAUDE_CHAT`, `CLAUDE_CODE`, `CLAUDE_COWORK`, `CLAUDE_DESIGN`, `COPILOT_CHAT`, `CURSOR_AGENTS`, `CURSOR_CHAT`, `DEEPSEEK_CHAT`, `GEMINI_CHAT`, `GOVAI_CHAT`, `GRAMMARLY_CHAT`, `GROK_CHAT`, `KIRO_CLI`, `KIRO_CREW`, `KIRO_WEB`, `LOVABLE_CHAT`, `M365_COPILOT_CHAT`, `M365_COPILOT_EMBEDDED`, `NOTION_CHAT`, `PERPLEXITY_CHAT`, `PERPLEXITY_COMPUTER`, `QWEN_CHAT`, `REPLIT_CHAT`, `RIPPLING_CHAT`, `SHAKUDO_CHAT`, `USE_AI_CHAT`'
+      operationId: ai_governance.policy.accepted
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: ai_governance.policy.accepted
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  policy:
+                    id: 3b9f2c7d-6e1a-4f58-a2c4-9d7e1b0f5a36
+                    name: Block personal ChatGPT accounts
+                    type: PERSONAL_ACCOUNT
+                  product: CHATGPT_CHAT
+                  accepted_at: '2026-06-09T18:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeAiGovernancePolicyAcceptedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: ai_governance.policy.accepted
+      tags:
+      - Webhooks
+  ai_governance.policy.overridden:
+    post:
+      description: 'A user overrode an AI Governance policy: they dismissed the policy''s action and continued their AI activity.
+
+
+        **Subscription filters**
+
+
+        - `policy` — filter to specific policy ids
+
+        - `product` — one of: `ABACUS_CHAT`, `CANVA_CHAT`, `CHATGPT_AGENTS`, `CHATGPT_CHAT`, `CHATGPT_CODEX`, `CLAUDE_CHAT`, `CLAUDE_CODE`, `CLAUDE_COWORK`, `CLAUDE_DESIGN`, `COPILOT_CHAT`, `CURSOR_AGENTS`, `CURSOR_CHAT`, `DEEPSEEK_CHAT`, `GEMINI_CHAT`, `GOVAI_CHAT`, `GRAMMARLY_CHAT`, `GROK_CHAT`, `KIRO_CLI`, `KIRO_CREW`, `KIRO_WEB`, `LOVABLE_CHAT`, `M365_COPILOT_CHAT`, `M365_COPILOT_EMBEDDED`, `NOTION_CHAT`, `PERPLEXITY_CHAT`, `PERPLEXITY_COMPUTER`, `QWEN_CHAT`, `REPLIT_CHAT`, `RIPPLING_CHAT`, `SHAKUDO_CHAT`, `USE_AI_CHAT`'
+      operationId: ai_governance.policy.overridden
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: ai_governance.policy.overridden
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  policy:
+                    id: 3b9f2c7d-6e1a-4f58-a2c4-9d7e1b0f5a36
+                    name: Block personal ChatGPT accounts
+                    type: PERSONAL_ACCOUNT
+                  product: CLAUDE_CODE
+                  overridden_at: '2026-06-09T18:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeAiGovernancePolicyOverriddenPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: ai_governance.policy.overridden
+      tags:
+      - Webhooks
+  ai_governance.policy.triggered:
+    post:
+      description: 'A user''s AI activity matched an AI Governance policy and the policy''s action was applied.
+
+
+        **Subscription filters**
+
+
+        - `policy` — filter to specific policy ids
+
+        - `product` — one of: `ABACUS_CHAT`, `CANVA_CHAT`, `CHATGPT_AGENTS`, `CHATGPT_CHAT`, `CHATGPT_CODEX`, `CLAUDE_CHAT`, `CLAUDE_CODE`, `CLAUDE_COWORK`, `CLAUDE_DESIGN`, `COPILOT_CHAT`, `CURSOR_AGENTS`, `CURSOR_CHAT`, `DEEPSEEK_CHAT`, `GEMINI_CHAT`, `GOVAI_CHAT`, `GRAMMARLY_CHAT`, `GROK_CHAT`, `KIRO_CLI`, `KIRO_CREW`, `KIRO_WEB`, `LOVABLE_CHAT`, `M365_COPILOT_CHAT`, `M365_COPILOT_EMBEDDED`, `NOTION_CHAT`, `PERPLEXITY_CHAT`, `PERPLEXITY_COMPUTER`, `QWEN_CHAT`, `REPLIT_CHAT`, `RIPPLING_CHAT`, `SHAKUDO_CHAT`, `USE_AI_CHAT`'
+      operationId: ai_governance.policy.triggered
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: ai_governance.policy.triggered
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  policy:
+                    id: 3b9f2c7d-6e1a-4f58-a2c4-9d7e1b0f5a36
+                    name: Block personal ChatGPT accounts
+                    type: PERSONAL_ACCOUNT
+                  product: CLAUDE_CODE
+                  triggered_at: '2026-06-09T18:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeAiGovernancePolicyTriggeredPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: ai_governance.policy.triggered
+      tags:
+      - Webhooks
+  ai_governance.prompt.flagged:
+    post:
+      description: 'A prompt a user submitted to an AI product was flagged as risky.
+
+
+        **Subscription filters**
+
+
+        - `product` — one of: `ABACUS_CHAT`, `CANVA_CHAT`, `CHATGPT_AGENTS`, `CHATGPT_CHAT`, `CHATGPT_CODEX`, `CLAUDE_CHAT`, `CLAUDE_CODE`, `CLAUDE_COWORK`, `CLAUDE_DESIGN`, `COPILOT_CHAT`, `CURSOR_AGENTS`, `CURSOR_CHAT`, `DEEPSEEK_CHAT`, `GEMINI_CHAT`, `GOVAI_CHAT`, `GRAMMARLY_CHAT`, `GROK_CHAT`, `KIRO_CLI`, `KIRO_CREW`, `KIRO_WEB`, `LOVABLE_CHAT`, `M365_COPILOT_CHAT`, `M365_COPILOT_EMBEDDED`, `NOTION_CHAT`, `PERPLEXITY_CHAT`, `PERPLEXITY_COMPUTER`, `QWEN_CHAT`, `REPLIT_CHAT`, `RIPPLING_CHAT`, `SHAKUDO_CHAT`, `USE_AI_CHAT`'
+      operationId: ai_governance.prompt.flagged
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: ai_governance.prompt.flagged
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  risk_analysis:
+                    prompt_risk_summary: The prompt and uploaded file may expose payment card data and customer PII to an external AI service.
+                    exposures:
+                    - source: FILE
+                      exposure: SOCIAL_SECURITY_NUMBER
+                      file_name: q3_customer_refunds.xlsx
+                  file_names:
+                  - q3_customer_refunds.xlsx
+                  - internal_notes.txt
+                  prompt_use_case: Financial analysis
+                  raw_prompt: Please summarize the attached refund spreadsheet and draft a reply to the cardholder using the notes in internal_notes.txt. Include the last four digits where helpful.
+                  product: CHATGPT_CHAT
+                  surface: BROWSER
+                  account_info:
+                    logged_in_email: marcus.lee@gmail.com
+                    plan_type: Free
+                  flagged_at: '2026-06-09T18:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeAiGovernancePromptFlaggedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: ai_governance.prompt.flagged
+      tags:
+      - Webhooks
+  email_security.security_event.created:
+    post:
+      description: 'An Email Security event at creation, including the review decision from the same ingest pass.
+
+
+        **Subscription filters**
+
+
+        - `classification` — one of: `MALICIOUS`, `SPAM`
+
+        - `review_status` — one of: `NEEDS_REVIEW`, `RESOLVED`
+
+        - `source` — one of: `DENYLIST`, `DETECTION`, `SIMILAR_FETCH`, `USER_REPORT`'
+      operationId: email_security.security_event.created
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: email_security.security_event.created
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  id: a8f2947c-3aef-4f5a-981f-08be76fde32f
+                  source: DETECTION
+                  classification: MALICIOUS
+                  created: '2026-09-15T22:19:04.212168Z'
+                  adaptive_url: https://admin.adaptivesecurity.com/email-security/security-events/a8f2947c-3aef-4f5a-981f-08be76fde32f
+                  review_status: RESOLVED
+                  auto_remediation_action: QUARANTINE
+                  message:
+                    sender: billing@vendor.example.com
+                    recipient: jordan.lee@example.com
+                    all_recipients:
+                    - jordan.lee@example.com
+                    - finance@example.com
+                    subject: 'Action required: verify your billing account'
+                    rfc_2392_message_id: <CAF1x2y3z4@mail.vendor.example.com>
+                    message_timestamp: '2026-09-15T22:15:25Z'
+                    headers:
+                    - name: Received
+                      value: from mail.vendor.example.com (mail.vendor.example.com [203.0.113.50])
+                    links:
+                    - url: https://billing-verify.example.net/login
+                      display_text: Verify your billing account
+                      source: EMAIL_BODY
+                      type: HYPERLINK
+                    attachments:
+                    - name: invoice.pdf
+                      file_extension: pdf
+                      size_bytes: 24576
+                      content_type: application/pdf
+                      sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                      scan_result: SAFE
+                  delivery:
+                    category: INBOX
+                    direction: INBOUND
+                    message_location: ORIGINAL_DELIVERY_LOCATION
+                  analysis:
+                    attack_type: CREDENTIAL_PHISHING
+                    confidence: 97
+                    attack_tactics:
+                    - vendor_impersonation
+                    - credential_harvesting
+                    explanation:
+                      summary: A fraudulent billing notice asks the recipient to sign in on a domain unrelated to the vendor.
+                      reasons:
+                      - headline: Credential-harvesting link
+                        detail: The billing verification link leads to a domain unrelated to the sender.
+                        evidence:
+                        - label: Link target
+                          value: https://billing-verify.example.net/login
+                  integration:
+                    id: 72f66c91-6aec-4561-9395-3b5b7d3b2b70
+                    provider: GOOGLE
+                    display_name: Acme Google Workspace
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeSecurityEventCreatedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: email_security.security_event.created
+      tags:
+      - Webhooks
+  phishing.failure.removed:
+    post:
+      description: 'An administrator removed a user''s recorded failure for a phishing simulation. This reverses a prior phishing.simulation.failed event: consumers tracking failure state should clear it for this user and campaign. If the user fails the simulation again, a new phishing.simulation.failed event is emitted.
+
+
+        **Subscription filters**
+
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: phishing.failure.removed
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: phishing.failure.removed
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7
+                    name: Q2 Finance Department Phishing
+                  simulation:
+                    id: 3f9a2b7c-1d4e-4a8b-9c0f-7e6d5a4b3c21
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopePhishingFailureRemovedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: phishing.failure.removed
+      tags:
+      - Webhooks
+  phishing.simulation.failed:
+    post:
+      description: 'A user failed an Adaptive phishing simulation by performing the simulation''s attack-vector action, such as clicking the link or entering credentials. Fires once per user per campaign; repeat interactions with the same simulation do not produce additional events.
+
+
+        **Subscription filters**
+
+
+        - `attack_vector` — one of: `ATTACHMENT_OPENED`, `CREDENTIALS_ENTERED`, `LINK_CLICKED`, `PHISHING_DEEP_FAKE_PLAYED`, `PHONE_NUMBER_CALLED`, `QR_CODE_SCANNED`, `TEXT_REPLIED`, `VOICE_REQUEST_COMPLIED`
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: phishing.simulation.failed
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: phishing.simulation.failed
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7
+                    name: Q2 Finance Department Phishing
+                  simulation:
+                    id: 3f9a2b7c-1d4e-4a8b-9c0f-7e6d5a4b3c21
+                  scenario:
+                    id: b7e6d5c4-3a2b-4c1d-8e9f-0a1b2c3d4e5f
+                    name: Password Expiration Notice
+                    channel: EMAIL
+                  attack_vector: CREDENTIALS_ENTERED
+                  client_info:
+                    ip: 203.0.113.42
+                    browser: Chrome
+                    browser_version: '125'
+                    os: macOS
+                    os_version: '14.5'
+                    device: Mac
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopePhishingSimulationFailedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: phishing.simulation.failed
+      tags:
+      - Webhooks
+  phishing.simulation.reported:
+    post:
+      description: 'A user reported an Adaptive phishing simulation. Fires once per report; reporting the same simulation again produces a new event. Reports of emails that are not Adaptive simulations are delivered as separate event types.
+
+
+        **Subscription filters**
+
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: phishing.simulation.reported
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: phishing.simulation.reported
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7
+                    name: Q2 Finance Department Phishing
+                  simulation:
+                    id: 3f9a2b7c-1d4e-4a8b-9c0f-7e6d5a4b3c21
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopePhishingSimulationReportedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: phishing.simulation.reported
+      tags:
+      - Webhooks
+  training.completed:
+    post:
+      description: 'A user finished a training campaign: every assigned module completed and every assigned policy accepted. Fires once per user per campaign; the envelope time is the completion time.
+
+
+        **Subscription filters**
+
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: training.completed
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: training.completed
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: 6c1d9a4e-2f7b-4d3a-9e8c-5b0a7f2d1c43
+                    name: Q3 Security Essentials
+                  manually_completed: false
+                  completed_at: '2026-06-09T18:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeTrainingCompletedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: training.completed
+      tags:
+      - Webhooks
+  training.enrollment.created:
+    post:
+      description: 'A user was enrolled in a training campaign — by schedule, by joining the campaign''s audience, by a triggered rule (e.g. phishing failure remediation), or manually by an admin. Fires once per enrollment episode; re-enrollment fires again.
+
+
+        **Subscription filters**
+
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: training.enrollment.created
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: training.enrollment.created
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: 6c1d9a4e-2f7b-4d3a-9e8c-5b0a7f2d1c43
+                    name: Q3 Security Essentials
+                  due_date: '2026-07-01T00:00:00Z'
+                  late_completions_allowed: true
+                  manually_enrolled: false
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeTrainingEnrollmentCreatedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: training.enrollment.created
+      tags:
+      - Webhooks
+  training.module.completed:
+    post:
+      description: 'A user completed one assigned module within a training campaign. The envelope time is the module completion time.
+
+
+        **Subscription filters**
+
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: training.module.completed
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: training.module.completed
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: 6c1d9a4e-2f7b-4d3a-9e8c-5b0a7f2d1c43
+                    name: Q3 Security Essentials
+                  module:
+                    id: 4a7e1d2c-8b5f-4c9a-a6d3-2e0f7b1c5d84
+                    name: Recognizing Phishing Emails
+                  manually_completed: false
+                  completed_at: '2026-06-09T18:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeTrainingModuleCompletedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: training.module.completed
+      tags:
+      - Webhooks
+  training.overdue:
+    post:
+      description: 'A user''s training campaign assignment passed its due date without completion. Fires once per user per campaign; the envelope time is when Adaptive detected the user was overdue.
+
+
+        **Subscription filters**
+
+
+        - `campaign` — filter to specific campaign ids'
+      operationId: training.overdue
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: training.overdue
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  campaign:
+                    id: 6c1d9a4e-2f7b-4d3a-9e8c-5b0a7f2d1c43
+                    name: Q3 Security Essentials
+                  due_date: '2026-07-01T00:00:00Z'
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeTrainingOverduePayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: training.overdue
+      tags:
+      - Webhooks
+  user.group.joined:
+    post:
+      description: 'A user joined a group. Groups are rule-based, so membership changes whenever user attributes or activity change. When a newly created group is first computed, every matching user emits a join with due_to_group_creation set to true — filter on due_to_group_creation = false to receive only membership changes after that first computation.
+
+
+        **Subscription filters**
+
+
+        - `due_to_group_creation` — `true` or `false`
+
+        - `group` — filter to specific group ids'
+      operationId: user.group.joined
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: user.group.joined
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  group:
+                    id: 5c1d9e8f-2a4b-4c6d-8e0f-1a2b3c4d5e6f
+                    name: High Risk Users
+                  due_to_group_creation: false
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeUserGroupJoinedPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: user.group.joined
+      tags:
+      - Webhooks
+  user.group.left:
+    post:
+      description: 'A user left a group. Groups are rule-based, so a user leaves when their attributes or activity no longer match the group''s rules, or when an administrator changes the rules. Consumers tracking membership state should clear it for this user and group.
+
+
+        **Subscription filters**
+
+
+        - `group` — filter to specific group ids'
+      operationId: user.group.left
+      requestBody:
+        content:
+          application/json:
+            example:
+              specversion: '1.0'
+              id: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+              source: /adaptive
+              type: user.group.left
+              time: '2026-06-09T18:00:00Z'
+              datacontenttype: application/json
+              data:
+                payload:
+                  user:
+                    id: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+                    email: jordan.lee@example.com
+                  group:
+                    id: 5c1d9e8f-2a4b-4c6d-8e0f-1a2b3c4d5e6f
+                    name: High Risk Users
+                customdata:
+                  team: secops
+            schema:
+              $ref: '#/components/schemas/WebhookEnvelopeUserGroupLeftPayload'
+        description: CloudEvents 1.0 envelope; the event payload is at `data.payload`.
+        required: true
+      responses:
+        2XX:
+          description: Return any 2xx status to acknowledge the delivery. Timeouts, 408, 429, and 5xx responses other than 501 are retried; any other status is a permanent failure.
+      summary: user.group.left
+      tags:
+      - Webhooks
+components:
+  schemas:
+    SecurityEventLink:
+      description: A link found in the email message body.
+      properties:
+        display_text:
+          type: string
+          description: Anchor text shown to the recipient. Absent for links without display text.
+          example: Verify your billing account
+        source:
+          type: string
+          description: Where the link was found in the email.
+          enum:
+          - EMAIL_BODY
+          - PDF_ATTACHMENT
+          example: EMAIL_BODY
+        type:
+          type: string
+          description: The type of link.
+          enum:
+          - HYPERLINK
+          - PLAIN_TEXT
+          - QR_CODE
+          example: HYPERLINK
+        url:
+          type: string
+          description: Target URL.
+          example: https://billing-verify.example.net/login
+    SecurityEventReason:
+      description: One reason for the email message's classification.
+      properties:
+        detail:
+          type: string
+          description: Full explanation of the reason.
+          example: The billing verification link leads to a domain unrelated to the sender.
+        evidence:
+          type: array
+          description: Evidence supporting this reason.
+          example:
+          - label: Link target
+            value: https://billing-verify.example.net/login
+          items:
+            $ref: '#/components/schemas/SecurityEventEvidence'
+        headline:
+          type: string
+          description: Short summary of the reason.
+          example: Credential-harvesting link
+    WebhookEnvelopeTrainingEnrollmentCreatedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataTrainingEnrollmentCreatedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: training.enrollment.created
+          description: the event type
+          example: training.enrollment.created
+    SecurityEventExplanation:
+      description: Why the email message was classified the way it was.
+      properties:
+        reasons:
+          type: array
+          description: Individual reasons behind the classification.
+          example:
+          - detail: The billing verification link leads to a domain unrelated to the sender.
+            evidence:
+            - label: Link target
+              value: https://billing-verify.example.net/login
+            headline: Credential-harvesting link
+          items:
+            $ref: '#/components/schemas/SecurityEventReason'
+        summary:
+          type: string
+          description: Summary of the detection.
+          example: A fraudulent billing notice asks the recipient to sign in on a domain unrelated to the vendor.
+    WebhookEnvelopeAiGovernancePolicyAcceptedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataAiGovernancePolicyAcceptedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: ai_governance.policy.accepted
+          description: the event type
+          example: ai_governance.policy.accepted
+    Scenario:
+      description: The phishing scenario (template) the user was exposed to.
+      properties:
+        channel:
+          type: string
+          description: The channel the phishing message was delivered through. Uses the same vocabulary as the Public API's phishing scenario channel.
+          enum:
+          - EMAIL
+          - TEXT
+          - INBOUND_PHONE_CALL
+          example: EMAIL
+        id:
+          type: string
+          description: Unique identifier of the phishing scenario the user was sent.
+          example: b7e6d5c4-3a2b-4c1d-8e9f-0a1b2c3d4e5f
+        name:
+          type: string
+          description: Human-readable name of the scenario (the specific phishing template used).
+          example: Password Expiration Notice
+    SecurityEventMessage:
+      description: The email message behind the security event.
+      properties:
+        all_recipients:
+          type: array
+          description: Every addressed recipient, including To, Cc and Bcc.
+          example:
+          - jordan.lee@example.com
+          - finance@example.com
+          items:
+            type: string
+        attachments:
+          type: array
+          description: Attachments recorded during scanning. Empty for denylist events or when none were persisted.
+          example:
+          - content_type: application/pdf
+            file_extension: pdf
+            name: invoice.pdf
+            scan_result: SAFE
+            sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+            size_bytes: 24576
+          items:
+            $ref: '#/components/schemas/SecurityEventAttachment'
+        headers:
+          type: array
+          description: Security-relevant headers in their original order. Repeated headers remain separate entries.
+          example:
+          - name: Received
+            value: from mail.vendor.example.com (mail.vendor.example.com [203.0.113.50])
+          items:
+            $ref: '#/components/schemas/SecurityEventHeader'
+        links:
+          type: array
+          description: Links found in the message body. Empty when none are available.
+          example:
+          - display_text: Verify your billing account
+            source: EMAIL_BODY
+            type: HYPERLINK
+            url: https://billing-verify.example.net/login
+          items:
+            $ref: '#/components/schemas/SecurityEventLink'
+        message_timestamp:
+          type: string
+          format: date-time
+          description: When the provider received the message (ISO-8601). Absent when unavailable.
+          example: '2026-09-15T22:15:25Z'
+        recipient:
+          type: string
+          description: Mailbox of the primary copy that created this event.
+          example: jordan.lee@example.com
+        rfc_2392_message_id:
+          type: string
+          description: RFC 2392 Message-ID. Absent when unavailable.
+          example: <CAF1x2y3z4@mail.vendor.example.com>
+        sender:
+          type: string
+          description: Sender address.
+          example: billing@vendor.example.com
+        subject:
+          type: string
+          description: Message subject. Absent when unavailable.
+          example: 'Action required: verify your billing account'
+    AiGovernancePromptFlaggedPayload:
+      description: A prompt a user submitted to an AI product was flagged as risky.
+      properties:
+        account_info:
+          $ref: '#/components/schemas/AiAccountInfo'
+        file_names:
+          type: array
+          description: Names of the files attached to the prompt. Empty when no files were attached.
+          example:
+          - q3_customer_refunds.xlsx
+          - internal_notes.txt
+          items:
+            type: string
+        flagged_at:
+          type: string
+          format: date-time
+          description: When the prompt was flagged (ISO-8601).
+          example: '2026-06-09T18:00:00Z'
+        product:
+          type: string
+          description: The AI Product the prompt was submitted to.
+          enum:
+          - CHATGPT_CODEX
+          - CHATGPT_CHAT
+          - CHATGPT_AGENTS
+          - CLAUDE_CHAT
+          - CLAUDE_COWORK
+          - CLAUDE_CODE
+          - CLAUDE_DESIGN
+          - COPILOT_CHAT
+          - CURSOR_CHAT
+          - CURSOR_AGENTS
+          - GEMINI_CHAT
+          - KIRO_WEB
+          - KIRO_CLI
+          - KIRO_CREW
+          - M365_COPILOT_CHAT
+          - M365_COPILOT_EMBEDDED
+          - PERPLEXITY_CHAT
+          - PERPLEXITY_COMPUTER
+          - DEEPSEEK_CHAT
+          - GROK_CHAT
+          - QWEN_CHAT
+          - ABACUS_CHAT
+          - CANVA_CHAT
+          - LOVABLE_CHAT
+          - REPLIT_CHAT
+          - GRAMMARLY_CHAT
+          - NOTION_CHAT
+          - RIPPLING_CHAT
+          - USE_AI_CHAT
+          - GOVAI_CHAT
+          - SHAKUDO_CHAT
+          example: CHATGPT_CHAT
+        prompt_use_case:
+          type: string
+          description: What the user was trying to accomplish with the prompt.
+          example: Financial analysis
+        raw_prompt:
+          type: string
+          description: The prompt text as the user submitted it. Absent when prompt capture is disabled.
+          example: Please summarize the attached refund spreadsheet and draft a reply to the cardholder using the notes in internal_notes.txt. Include the last four digits where helpful.
+        risk_analysis:
+          $ref: '#/components/schemas/PromptRiskAnalysis'
+        surface:
+          type: string
+          description: 'Where the prompt was captured: in the browser, in a desktop app, or in a command-line tool.'
+          enum:
+          - BROWSER
+          - APP
+          - CLI
+          example: BROWSER
+        user:
+          $ref: '#/components/schemas/User'
+    WebhookEnvelopeTrainingOverduePayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataTrainingOverduePayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: training.overdue
+          description: the event type
+          example: training.overdue
+    User:
+      description: The user the event concerns.
+      properties:
+        email:
+          type: string
+          description: Email address of the user.
+          example: jordan.lee@example.com
+        id:
+          type: string
+          description: Unique Adaptive identifier for the user. Use it to fetch full user details from the Public API (GET /v2/users/{userId}).
+          example: 8d2c1f6a-9b3e-4c7a-bf21-2a5e9c1d4b88
+    Simulation:
+      description: The specific run of the phishing campaign (one occurrence of a recurring campaign).
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this specific run of the campaign. Fetch run details from the Public API (GET /v2/phishing/simulations/{simulationId}).
+          example: 3f9a2b7c-1d4e-4a8b-9c0f-7e6d5a4b3c21
+    PhishingSimulationReportedPayload:
+      description: A user reported an Adaptive phishing simulation. Fires once per report; reporting the same simulation again produces a new event. Reports of emails that are not Adaptive simulations are delivered as separate event types.
+      properties:
+        campaign:
+          $ref: '#/components/schemas/Campaign'
+        simulation:
+          $ref: '#/components/schemas/Simulation'
+        user:
+          $ref: '#/components/schemas/User'
+    WebhookEnvelopeAdminAuditLogCreatedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataAdminAuditLogCreatedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: admin.audit_log.created
+          description: the event type
+          example: admin.audit_log.created
+    AuditEntity:
+      description: An entity affected by the action.
+      properties:
+        id:
+          type: string
+          description: The entity identifier.
+          example: a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7
+        name:
+          type: string
+          description: Human-readable entity name when available; otherwise null.
+          example: Q3 Security Essentials
+        type:
+          type: string
+          description: The kind of entity.
+          example: CAMPAIGN
+    WebhookEnvelopeDataAiGovernancePromptFlaggedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/AiGovernancePromptFlaggedPayload'
+    PhishingFailureRemovedPayload:
+      description: 'An administrator removed a user''s recorded failure for a phishing simulation. This reverses a prior phishing.simulation.failed event: consumers tracking failure state should clear it for this user and campaign. If the user fails the simulation again, a new phishing.simulation.failed event is emitted.'
+      properties:
+        campaign:
+          $ref: '#/components/schemas/Campaign'
+        simulation:
+          $ref: '#/components/schemas/Simulation'
+        user:
+          $ref: '#/components/schemas/User'
+    SecurityEventIntegration:
+      description: The email integration the message was delivered to.
+      properties:
+        display_name:
+          type: string
+          description: Name the admin gave the integration. Absent when unavailable.
+          example: Acme Google Workspace
+        id:
+          type: string
+          format: uuid
+          description: Integration identifier.
+          example: 72f66c91-6aec-4561-9395-3b5b7d3b2b70
+        provider:
+          type: string
+          description: Email provider.
+          enum:
+          - GOOGLE
+          - MICROSOFT
+          example: GOOGLE
+    TrainingCompletedPayload:
+      description: 'A user finished a training campaign: every assigned module completed and every assigned policy accepted. Fires once per user per campaign; the envelope time is the completion time.'
+      properties:
+        campaign:
+          $ref: '#/components/schemas/TrainingCampaign'
+        completed_at:
+          type: string
+          format: date-time
+          description: When the user completed the campaign (ISO-8601).
+          example: '2026-06-09T18:00:00Z'
+        manually_completed:
+          type: boolean
+          description: True when an admin marked the training complete on the user's behalf rather than the user finishing the content themselves. Compliance ledgers should record the distinction.
+          example: false
+        user:
+          $ref: '#/components/schemas/User'
+    AiGovernancePolicyAcceptedPayload:
+      description: 'A user accepted an AI Governance policy: they followed the policy instead of continuing restricted actions.'
+      properties:
+        accepted_at:
+          type: string
+          format: date-time
+          description: When the user accepted the policy (ISO-8601).
+          example: '2026-06-09T18:00:00Z'
+        policy:
+          $ref: '#/components/schemas/GovernancePolicy'
+        product:
+          type: string
+          description: The AI Product the user was using when they accepted the policy.
+          enum:
+          - CHATGPT_CODEX
+          - CHATGPT_CHAT
+          - CHATGPT_AGENTS
+          - CLAUDE_CHAT
+          - CLAUDE_COWORK
+          - CLAUDE_CODE
+          - CLAUDE_DESIGN
+          - COPILOT_CHAT
+          - CURSOR_CHAT
+          - CURSOR_AGENTS
+          - GEMINI_CHAT
+          - KIRO_WEB
+          - KIRO_CLI
+          - KIRO_CREW
+          - M365_COPILOT_CHAT
+          - M365_COPILOT_EMBEDDED
+          - PERPLEXITY_CHAT
+          - PERPLEXITY_COMPUTER
+          - DEEPSEEK_CHAT
+          - GROK_CHAT
+          - QWEN_CHAT
+          - ABACUS_CHAT
+          - CANVA_CHAT
+          - LOVABLE_CHAT
+          - REPLIT_CHAT
+          - GRAMMARLY_CHAT
+          - NOTION_CHAT
+          - RIPPLING_CHAT
+          - USE_AI_CHAT
+          - GOVAI_CHAT
+          - SHAKUDO_CHAT
+          example: CHATGPT_CHAT
+        user:
+          $ref: '#/components/schemas/User'
+    SecurityEventAttachment:
+      description: An attachment recorded when the message was scanned.
+      properties:
+        content_type:
+          type: string
+          description: MIME type.
+          example: application/pdf
+        file_extension:
+          type: string
+          description: Extension parsed from the file name. Absent when the name has no extension.
+          example: pdf
+        name:
+          type: string
+          description: File name.
+          example: invoice.pdf
+        scan_result:
+          type: string
+          description: Malware scan outcome at event creation.
+          enum:
+          - SAFE
+          - MALICIOUS
+          - UNDETERMINED
+          example: SAFE
+        sha256:
+          type: string
+          description: SHA-256 of the file contents.
+          example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        size_bytes:
+          type: integer
+          format: int64
+          description: Size in bytes.
+          example: 24576
+    WebhookEnvelopeDataTrainingCompletedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/TrainingCompletedPayload'
+    Campaign:
+      description: The phishing campaign — the recurring series this simulation run belongs to.
+      properties:
+        id:
+          type: string
+          description: Unique Adaptive identifier for the campaign — the recurring series this simulation belongs to. Fetch campaign details from the Public API (GET /v2/phishing/campaigns/{campaignId}).
+          example: a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7
+        name:
+          type: string
+          description: Human-readable name of the campaign.
+          example: Q2 Finance Department Phishing
+    WebhookEnvelopeTrainingModuleCompletedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataTrainingModuleCompletedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: training.module.completed
+          description: the event type
+          example: training.module.completed
+    Group:
+      description: 'The group the event concerns. Groups are rule-based: membership is recalculated as user attributes and activity change.'
+      properties:
+        id:
+          type: string
+          description: Unique Adaptive identifier for the group. Use it to fetch full group details from the Public API (GET /v2/groups/{groupId}).
+          example: 5c1d9e8f-2a4b-4c6d-8e0f-1a2b3c4d5e6f
+        name:
+          type: string
+          description: Human-readable name of the group.
+          example: High Risk Users
+    SecurityEventHeader:
+      description: A single header from the raw email message.
+      properties:
+        name:
+          type: string
+          description: Header name as it appears in the message.
+          example: Received
+        value:
+          type: string
+          description: Header value.
+          example: from mail.vendor.example.com (mail.vendor.example.com [203.0.113.50])
+    WebhookEnvelopeDataUserGroupLeftPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/UserGroupLeftPayload'
+    TrainingModule:
+      description: The training module the event concerns, as assigned in the campaign.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the module snapshot assigned in this training campaign.
+          example: 4a7e1d2c-8b5f-4c9a-a6d3-2e0f7b1c5d84
+        name:
+          type: string
+          description: Human-readable title of the assigned module.
+          example: Recognizing Phishing Emails
+    PromptRiskAnalysis:
+      description: 'Why the prompt was flagged: a summary and the specific exposures found.'
+      properties:
+        exposures:
+          type: array
+          description: Sensitive-data exposures found in the prompt text and attached files. Empty when the prompt was flagged for a reason other than sensitive data.
+          items:
+            $ref: '#/components/schemas/PromptExposure'
+        prompt_risk_summary:
+          type: string
+          description: Summary of the risk the prompt and its attachments pose.
+          example: The prompt and uploaded file may expose payment card data and customer PII to an external AI service.
+    WebhookEnvelopeDataSecurityEventCreatedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/SecurityEventCreatedPayload'
+    PhishingSimulationFailedPayload:
+      description: A user failed an Adaptive phishing simulation by performing the simulation's attack-vector action, such as clicking the link or entering credentials. Fires once per user per campaign; repeat interactions with the same simulation do not produce additional events.
+      properties:
+        attack_vector:
+          type: string
+          description: The action the user took that counts as failing the simulation. Uses the same vocabulary as the Public API's phishing scenario attack_vector.
+          enum:
+          - LINK_CLICKED
+          - CREDENTIALS_ENTERED
+          - ATTACHMENT_OPENED
+          - QR_CODE_SCANNED
+          - PHONE_NUMBER_CALLED
+          - VOICE_REQUEST_COMPLIED
+          - TEXT_REPLIED
+          - PHISHING_DEEP_FAKE_PLAYED
+          example: CREDENTIALS_ENTERED
+        campaign:
+          $ref: '#/components/schemas/Campaign'
+        client_info:
+          $ref: '#/components/schemas/ClientInfo'
+        scenario:
+          $ref: '#/components/schemas/Scenario'
+        simulation:
+          $ref: '#/components/schemas/Simulation'
+        user:
+          $ref: '#/components/schemas/User'
+    TrainingEnrollmentCreatedPayload:
+      description: A user was enrolled in a training campaign — by schedule, by joining the campaign's audience, by a triggered rule (e.g. phishing failure remediation), or manually by an admin. Fires once per enrollment episode; re-enrollment fires again.
+      properties:
+        campaign:
+          $ref: '#/components/schemas/TrainingCampaign'
+        due_date:
+          type: string
+          format: date-time
+          description: The user's completion deadline (ISO-8601), or null when the enrollment carries no per-user due date.
+          example: '2026-07-01T00:00:00Z'
+        late_completions_allowed:
+          type: boolean
+          description: Whether the campaign accepts completions after the due date.
+          example: true
+        manually_enrolled:
+          type: boolean
+          description: True when an admin enrolled the user directly rather than the enrollment coming from the campaign's schedule, audience, or a triggered rule.
+          example: false
+        user:
+          $ref: '#/components/schemas/User'
+    WebhookEnvelopePhishingFailureRemovedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataPhishingFailureRemovedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: phishing.failure.removed
+          description: the event type
+          example: phishing.failure.removed
+    SecurityEventCreatedPayload:
+      description: An Email Security event at creation, including the review decision from the same ingest pass.
+      properties:
+        adaptive_url:
+          type: string
+          description: Link to view this security event in Adaptive.
+          example: https://admin.adaptivesecurity.com/email-security/security-events/a8f2947c-3aef-4f5a-981f-08be76fde32f
+        analysis:
+          $ref: '#/components/schemas/SecurityEventAnalysis'
+        auto_remediation_action:
+          type: string
+          description: Automatic remediation action started during ingestion, not a confirmation of completion. Absent when no action was decided or applying the decision failed.
+          enum:
+          - DELETE
+          - MOVE_TO_SPAM
+          - QUARANTINE
+          example: QUARANTINE
+        classification:
+          type: string
+          description: How the security event was classified at creation.
+          enum:
+          - MALICIOUS
+          - SPAM
+          example: MALICIOUS
+        created:
+          type: string
+          format: date-time
+          description: When the security event was created (ISO-8601).
+          example: '2026-09-15T22:19:04.212168Z'
+        delivery:
+          $ref: '#/components/schemas/SecurityEventDelivery'
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the security event.
+          example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        integration:
+          $ref: '#/components/schemas/SecurityEventIntegration'
+        message:
+          $ref: '#/components/schemas/SecurityEventMessage'
+        review_status:
+          type: string
+          description: Review status decided during ingestion, not the transient remediation workflow state.
+          enum:
+          - NEEDS_REVIEW
+          - RESOLVED
+          example: RESOLVED
+        source:
+          type: string
+          description: What caused the security event to be created.
+          enum:
+          - DETECTION
+          - USER_REPORT
+          - SIMILAR_FETCH
+          - DENYLIST
+          example: DETECTION
+    WebhookEnvelopeDataAiGovernancePolicyAcceptedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/AiGovernancePolicyAcceptedPayload'
+    PromptExposure:
+      description: A sensitive-data exposure found in the prompt text or in an attached file.
+      properties:
+        exposure:
+          type: string
+          description: The kind of sensitive data that was exposed.
+          enum:
+          - FULL_NAME
+          - PHYSICAL_ADDRESS
+          - SOCIAL_SECURITY_NUMBER
+          - CANADA_SIN
+          - ITIN
+          - EMPLOYER_ID
+          - DOB
+          - PRECISE_LOCATION
+          - DRIVERS_LICENSE
+          - US_PASSPORT_NUMBER
+          - EMAIL_ADDRESS
+          - FICO_CREDIT_SCORE
+          - ROUTING_NUMBER
+          - SWIFT_BIC_CODE
+          - IBAN
+          - CREDIT_CARD_PAN
+          - AWS_SECRET_KEY
+          - AWS_ACCESS_KEY_IDENTIFIER
+          - AWS_IAM_IDENTIFIER
+          - TWILIO_AUTH_TOKEN
+          - BEARER_TOKEN
+          - OPENAI_API_KEY
+          - GOOGLE_API_KEY
+          - GITHUB_CLASSIC_TOKEN
+          - GITLAB_TOKEN
+          - GITLAB_CELLS_TOKEN
+          - SLACK_TOKEN
+          - STRIPE_SECRET_KEY
+          - STRIPE_PAYMENT_TOKEN
+          - SENDGRID_API_KEY
+          - NPM_TOKEN
+          - PYPI_TOKEN
+          - DATADOG_PRIVATE_KEY
+          - SENTRY_DNS
+          - AZURE_CONNECTION_STRING
+          - DATABASE_CONNECTION_STRING
+          - PG_DATABASE_CONNECTION
+          - MONGODB_URI
+          - REDIS_CONNECTION_URI
+          - BASIC_AUTH_CREDENTIALS
+          - JWT_SESSION_TOKEN
+          - SAML_ASSERTION
+          - PRIVATE_KEY_PKCS8
+          - SSH_PRIVATE_KEY
+          - PGP_PRIVATE_KEY
+          - RSA_PRIVATE_KEY
+          - OTHER
+          example: SOCIAL_SECURITY_NUMBER
+        file_name:
+          type: string
+          description: Name of the attached file the exposure was found in. Only present when `source` is `FILE`.
+          example: q3_customer_refunds.xlsx
+        source:
+          type: string
+          description: 'Where the exposure was found: the prompt text or an attached file.'
+          enum:
+          - PROMPT
+          - FILE
+          example: FILE
+    AdminAuditLogCreatedPayload:
+      description: A customer admin performed an auditable action.
+      properties:
+        action:
+          type: string
+          description: The action that occurred.
+          enum:
+          - UNKNOWN
+          - CREATED_TRAINING_CAMPAIGN
+          - SCHEDULED_TRAINING_CAMPAIGN
+          - UNSCHEDULED_TRAINING_CAMPAIGN
+          - EDITED_TRAINING_CAMPAIGN
+          - EDITED_NOTIFICATION_CADENCE
+          - EDITED_LEARNER_SETTINGS
+          - EDITED_LATE_COMPLETIONS
+          - EDITED_CAMPAIGN_POSTBACKS
+          - SENT_TRAINING_CAMPAIGN_NOTIFICATION_TEST_SENDS
+          - SENT_ADHOC_TRAINING_NOTIFICATION
+          - CLONED_TRAINING_CAMPAIGN
+          - ENDED_TRAINING_CAMPAIGN
+          - DELETED_TRAINING_CAMPAIGN
+          - ADDED_EMPLOYEE_TO_TRAINING_CAMPAIGN
+          - REMOVED_EMPLOYEE_FROM_TRAINING_CAMPAIGN
+          - MARKED_EMPLOYEE_COMPLETED_TRAINING_CAMPAIGN
+          - CREATED_PHISHING_SIMULATION_CAMPAIGN
+          - CLONED_PHISHING_SIMULATION_CAMPAIGN
+          - EDITED_PHISHING_SIMULATION_CAMPAIGN
+          - SCHEDULED_PHISHING_SIMULATION_CAMPAIGN
+          - UNSCHEDULED_PHISHING_SIMULATION_CAMPAIGN
+          - ENDED_PHISHING_SIMULATION_CAMPAIGN
+          - DELETED_PHISHING_SIMULATION_CAMPAIGN
+          - BULK_UPDATED_EMPLOYEES_PHISHING_FAILURE_STATUSES
+          - MARKED_EMPLOYEE_NOT_FAILED_PHISHING_SIMULATION
+          - SENT_ADHOC_PHISHING_SIMULATION_NOTIFICATION
+          - SENT_PHISHING_CAMPAIGN_NOTIFICATION_TEST_SENDS
+          - LAUNCHED_VIDEO_CALL_ATTACK
+          - EDITED_WORKSPACE_NAME
+          - UPDATED_COMPANY_PRODUCT_STATUS
+          - EDITED_MANAGER_ESCALATIONS
+          - EDITED_MANAGER_PHISH_FAILURE_NOTIFICATION
+          - EDITED_NOTIFICATION_EXCLUSIONS_LIST
+          - EDITED_NOTIFICATION_MESSAGE
+          - RESTORED_NOTIFICATION_MESSAGE_DEFAULT
+          - EDITED_PHISHING_IP_BLOCKLIST
+          - ACKNOWLEDGED_SMS_VOICE_PHISHING_TERMS
+          - ATTESTED_EMAIL_IP_WHITELIST
+          - RESET_EMAIL_IP_WHITELIST
+          - TOGGLED_AUTO_ACTIVATE_ALL_AVAILABLE_DOMAINS
+          - TOGGLED_PHISHING_EMAIL_SENDER_SUBDOMAINS
+          - TOGGLED_AUTOMATED_BOT_EXCLUSION_RULE
+          - TOGGLED_PHISHING_DOMAIN
+          - CREATED_PHISHING_DOMAIN
+          - UPDATED_PHISHING_DOMAIN_STATUS
+          - UPDATED_PHISHING_DELIVERY_METHOD
+          - UPDATED_COMPANY_ATTRIBUTE
+          - UPDATED_TRIAGE_SETTINGS
+          - UPDATED_EMAIL_BANNER_SETTINGS
+          - ADDED_ADMIN_AUTHENTICATION_METHOD
+          - REMOVED_ADMIN_AUTHENTICATION_METHOD
+          - ADDED_EMPLOYEE_AUTHENTICATION_METHOD
+          - REMOVED_EMPLOYEE_AUTHENTICATION_METHOD
+          - CREATED_GROUP
+          - EDITED_GROUP
+          - EXCLUDED_EMPLOYEE
+          - DEACTIVATED_EMPLOYEE
+          - REACTIVATED_EMPLOYEE
+          - ADDED_INDIVIDUAL_EMPLOYEE
+          - UPLOADED_EMPLOYEE_LIST_CSV
+          - OVERRODE_EMPLOYEE_ATTRIBUTE
+          - REVERTED_EMPLOYEE_ATTRIBUTE_OVERRIDE
+          - HARD_DELETED_EMPLOYEE
+          - CONNECTED_PRIMARY_IDENTITY_SOURCE
+          - DISCONNECTED_PRIMARY_IDENTITY_SOURCE
+          - CONNECTED_ENRICHMENT_DATA_SOURCE
+          - DISCONNECTED_ENRICHMENT_DATA_SOURCE
+          - CONNECTED_INTEGRATION
+          - DISCONNECTED_INTEGRATION
+          - UPDATED_INTEGRATION_SYNC_TYPE
+          - REFRESHED_INTEGRATION
+          - UPDATED_DIRECTORY_INTEGRATION_SYNC_TYPE
+          - VIEWED_MISSING_IDENTIFIER_USERS
+          - REFRESHED_DIRECTORY_INTEGRATION
+          - CREATED_INTEGRATION_OAUTH_CREDENTIALS
+          - CREATED_INTEGRATION_LINK
+          - UPDATED_INTEGRATION_DISPLAY_NAME
+          - UPDATED_INTEGRATION_CREDENTIALS
+          - IMPORTED_INTEGRATION_SENDER_RULES
+          - UPDATED_LMS_INTEGRATION
+          - UPDATED_EMAIL_WHITELISTING_VENDORS
+          - UPDATED_EMAIL_WHITELISTING_VENDOR_STATUS
+          - REVIEWED_INTEGRATION_ONBOARDING_CHANGES
+          - ADDED_ADMIN
+          - DELETED_ADMIN
+          - CHANGED_ADMIN_ROLE
+          - EDITED_ADMIN
+          - UPDATED_USER_ATTRIBUTE_SOURCE_PRIORITIES
+          - UPDATED_CUSTOM_ATTRIBUTE_SCHEMA
+          - DELETED_CUSTOM_ATTRIBUTE_SCHEMA
+          - CREATED_PERSONA
+          - EDITED_PERSONA
+          - DELETED_PERSONA
+          - DELETED_PERSONA_WITH_DEPENDENT_CONTENT
+          - STARTED_PROVISIONING_CONTENT_WORKFLOW
+          - REQUESTED_COMPANY_PROVISIONING
+          - UPLOADED_AI_PERSONA_IMAGE
+          - UPLOADED_AI_PERSONA_AUDIO
+          - GENERATED_AI_PERSONA_AUDIO_CLIP
+          - GENERATED_AI_PERSONA_VIDEO_CLIP
+          - DOWNLOADED_AI_PERSONA_AUDIO_CLIP
+          - DOWNLOADED_AI_PERSONA_VIDEO_CLIP
+          - DOWNLOADED_AI_PERSONA_IMAGE
+          - DOWNLOADED_AI_PERSONA_VOICE_SAMPLE
+          - ADMIN_LOGGED_IN
+          - ADMIN_RESET_PASSWORD
+          - CREATED_EXECUTIVE_REPORT
+          - REGENERATE_EXECUTIVE_REPORT
+          - DELETED_EXECUTIVE_REPORT
+          - BATCH_GENERATE_EXECUTIVE_REPORTS
+          - CREATED_MODULE
+          - EDITED_MODULE
+          - EDITED_MODULE_TRANSLATIONS
+          - DELETED_MODULE_TRANSLATIONS
+          - MARKED_MODULE_TRANSLATIONS_UP_TO_DATE
+          - REQUESTED_MODULE_TRANSLATION_GENERATION
+          - REQUESTED_MODULE_TRANSLATION_CANCELLATION
+          - REQUESTED_MODULE_TRANSLATION_RECOVERY
+          - PATCHED_CAMPAIGN_FRAMES
+          - RESTORED_CAMPAIGN_FRAMES
+          - CREATED_SCENARIO
+          - DUPLICATED_SCENARIO
+          - EDITED_SCENARIO
+          - DELETED_SCENARIO
+          - UPDATED_SCENARIO_VOICE_PHISHING_REVEAL
+          - DOWNLOADED_SCORM_PACKAGE
+          - PUBLISHED_INDUSTRY_BENCHMARK_REPORT
+          - UNPUBLISHED_INDUSTRY_BENCHMARK_REPORT
+          - CREATED_EMAIL_DOMAIN_CONFIGURATION
+          - VERIFIED_EMAIL_DOMAIN_CONFIGURATION
+          - PROMOTED_EMAIL_DOMAIN_CONFIGURATION
+          - DELETED_EMAIL_DOMAIN_CONFIGURATION
+          - SENT_EMAIL_DOMAIN_TEST
+          - UPDATED_NOTIFICATION_SENDER_SETTINGS
+          - CREATED_API_KEY
+          - UPDATED_API_KEY_PERMISSIONS
+          - DELETED_API_KEY
+          - UPDATED_API_KEY_STATUS
+          - CREATED_WEBHOOK_ENDPOINT
+          - UPDATED_WEBHOOK_ENDPOINT
+          - DELETED_WEBHOOK_ENDPOINT
+          - REENABLED_WEBHOOK_ENDPOINT
+          - DISABLED_WEBHOOK_ENDPOINT
+          - REVEALED_WEBHOOK_ENDPOINT_SECRETS
+          - REGENERATED_WEBHOOK_ENDPOINT_SECRET
+          - SENT_WEBHOOK_TEST_EVENT
+          - SUBMITTED_EMAIL_ANNOTATION
+          - OVERRODE_EMAIL_ANNOTATION
+          - EXPORTED_EMAIL_ANNOTATION_CONTENT
+          - MARKED_KNOWN_SENDER
+          - VIEWED_EMAIL_CONTENT
+          - DOWNLOADED_EMAIL_ATTACHMENT
+          - UPSERTED_CLASSIFIER_THRESHOLD
+          - DELETED_CLASSIFIER_THRESHOLD
+          - UPDATED_COMPANY_CONTEXT_ADDENDUM
+          - CREATED_SENDER_RULE
+          - DELETED_SENDER_RULE
+          - BULK_DELETED_SENDER_RULES
+          - IMPORTED_SENDER_RULES
+          - BULK_DELETED_EXCLUSION_RULES
+          - IMPORTED_EXCLUSION_RULES
+          - TOGGLED_EMAIL_SECURITY_REMEDIATE_SIMILAR_MESSAGES
+          - ENABLED_SPAM_DETECTION
+          - INTERNAL_ACCESS_REQUESTED
+          - INTERNAL_ACCESS_EXTENDED
+          - INTERNAL_SESSION_ENDED
+          - VIEWED_GOVERNANCE_PROMPT
+          - VIEWED_GOVERNANCE_AGENT_INSTRUCTION
+          - UPDATED_AI_GOVERNANCE_PROMPT_RETENTION
+          - ADDED_AI_GOVERNANCE_TRACKING_EXCLUSION
+          - REMOVED_AI_GOVERNANCE_TRACKING_EXCLUSION
+          - ACKNOWLEDGED_AI_GOVERNANCE_SENSOR_TERMS
+          - CREATED_AI_GOVERNANCE_POLICY
+          - EDITED_AI_GOVERNANCE_POLICY
+          - ACTIVATED_AI_GOVERNANCE_POLICY
+          - ENDED_AI_GOVERNANCE_POLICY
+          - DELETED_AI_GOVERNANCE_POLICY
+          - CREATED_FEATURE_ANNOUNCEMENT
+          - EDITED_FEATURE_ANNOUNCEMENT
+          - DELETED_FEATURE_ANNOUNCEMENT
+          - CREATED_PRONUNCIATION_OVERRIDE
+          - EDITED_PRONUNCIATION_OVERRIDE
+          - DELETED_PRONUNCIATION_OVERRIDE
+          - TOGGLED_PRONUNCIATION_OVERRIDE
+          - REGENERATED_FRAME_NARRATIONS
+          - ASSIGNED_INBOX_DOMAIN_OWNER
+          example: CREATED_TRAINING_CAMPAIGN
+        actor:
+          $ref: '#/components/schemas/AuditActor'
+        category:
+          type: string
+          description: Top-level product area for the action.
+          enum:
+          - SAT_PROGRAM
+          - WORKSPACE
+          - USERS
+          - LLM_SECURITY
+          - API
+          - EMAIL_SECURITY
+          - AI_GOVERNANCE
+          example: SAT_PROGRAM
+        client_info:
+          $ref: '#/components/schemas/ClientInfo'
+        entities:
+          type: array
+          description: Entities affected by the action.
+          items:
+            $ref: '#/components/schemas/AuditEntity'
+        id:
+          type: string
+          description: Unique identifier for the audit log entry.
+          example: 123e4567-e89b-12d3-a456-426614174000
+        message:
+          type: string
+          description: Human-readable description of the action.
+          example: Created training campaign.
+        subcategory:
+          type: string
+          description: Feature area for the action.
+          enum:
+          - GROUPS
+          - TRAINING
+          - PHISHING_SIMULATION
+          - COMPANY_SETTINGS
+          - AUTHENTICATION
+          - EMPLOYEES
+          - INTEGRATIONS
+          - ADMINS
+          - AI_PERSONAS
+          - EXECUTIVE_RISK
+          - API_KEYS
+          - WEBHOOKS
+          - EMAIL_ANNOTATIONS
+          - SENDER_RULES
+          - DETECTION_THRESHOLDS
+          - COMPANY_CONTEXT
+          - EXCLUSION_RULES
+          - REMEDIATION_SETTINGS
+          - GOVERNANCE_PROMPTS
+          - GOVERNANCE_SETTINGS
+          - GOVERNANCE_POLICIES
+          - PRONUNCIATIONS
+          example: TRAINING
+        success:
+          type: boolean
+          description: Whether the admin action completed successfully.
+          example: true
+    AiAccountInfo:
+      description: The account signed in to the AI product when the prompt was submitted.
+      properties:
+        logged_in_email:
+          type: string
+          description: Email address of the account signed in to the AI product.
+          example: marcus.lee@gmail.com
+        plan_type:
+          type: string
+          description: The AI product's plan for the signed-in account, as reported by the vendor (for example Free, Plus, Team, or Enterprise).
+          example: Free
+    WebhookEnvelopePhishingSimulationReportedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataPhishingSimulationReportedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: phishing.simulation.reported
+          description: the event type
+          example: phishing.simulation.reported
+    WebhookEnvelopeAiGovernancePromptFlaggedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataAiGovernancePromptFlaggedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: ai_governance.prompt.flagged
+          description: the event type
+          example: ai_governance.prompt.flagged
+    JsonNode:
+      description: the arbitrary JSON configured on the subscription, echoed on every delivery
+    WebhookEnvelopeDataAdminAuditLogCreatedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/AdminAuditLogCreatedPayload'
+    UserGroupLeftPayload:
+      description: A user left a group. Groups are rule-based, so a user leaves when their attributes or activity no longer match the group's rules, or when an administrator changes the rules. Consumers tracking membership state should clear it for this user and group.
+      properties:
+        group:
+          $ref: '#/components/schemas/Group'
+        user:
+          $ref: '#/components/schemas/User'
+    AuditActor:
+      description: 'Who performed the action: an administrator, or Adaptive itself for automatic actions.'
+      properties:
+        email:
+          type: string
+          description: Email address of the admin. Omitted for SYSTEM actors.
+          example: alex.morgan@example.com
+        id:
+          type: string
+          description: Unique Adaptive identifier for the admin. For SYSTEM actors this is the nil UUID 00000000-0000-0000-0000-000000000000.
+          example: 7d3f2a1b-9c8e-4d6f-a5b4-3c2d1e0f9a87
+        name:
+          type: string
+          description: Human-readable name of the admin, when set. "System" for SYSTEM actors.
+          example: Alex Morgan
+        role:
+          type: string
+          description: Role of the admin at the time of the action. SYSTEM for SYSTEM actors.
+          example: ACCOUNT_OWNER
+        type:
+          type: string
+          description: ADMIN when an administrator performed the action; SYSTEM when Adaptive performed it automatically, such as a campaign ending on its end date.
+          enum:
+          - ADMIN
+          - SYSTEM
+          example: ADMIN
+    AiGovernancePolicyOverriddenPayload:
+      description: 'A user overrode an AI Governance policy: they dismissed the policy''s action and continued their AI activity.'
+      properties:
+        overridden_at:
+          type: string
+          format: date-time
+          description: When the user overrode the policy (ISO-8601).
+          example: '2026-06-09T18:00:00Z'
+        policy:
+          $ref: '#/components/schemas/GovernancePolicy'
+        product:
+          type: string
+          description: The AI Product the user was using when they overrode the policy.
+          enum:
+          - CHATGPT_CODEX
+          - CHATGPT_CHAT
+          - CHATGPT_AGENTS
+          - CLAUDE_CHAT
+          - CLAUDE_COWORK
+          - CLAUDE_CODE
+          - CLAUDE_DESIGN
+          - COPILOT_CHAT
+          - CURSOR_CHAT
+          - CURSOR_AGENTS
+          - GEMINI_CHAT
+          - KIRO_WEB
+          - KIRO_CLI
+          - KIRO_CREW
+          - M365_COPILOT_CHAT
+          - M365_COPILOT_EMBEDDED
+          - PERPLEXITY_CHAT
+          - PERPLEXITY_COMPUTER
+          - DEEPSEEK_CHAT
+          - GROK_CHAT
+          - QWEN_CHAT
+          - ABACUS_CHAT
+          - CANVA_CHAT
+          - LOVABLE_CHAT
+          - REPLIT_CHAT
+          - GRAMMARLY_CHAT
+          - NOTION_CHAT
+          - RIPPLING_CHAT
+          - USE_AI_CHAT
+          - GOVAI_CHAT
+          - SHAKUDO_CHAT
+          example: CLAUDE_CODE
+        user:
+          $ref: '#/components/schemas/User'
+    WebhookEnvelopeSecurityEventCreatedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataSecurityEventCreatedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: email_security.security_event.created
+          description: the event type
+          example: email_security.security_event.created
+    SecurityEventDelivery:
+      description: How and where the email message was delivered at event creation.
+      properties:
+        category:
+          type: string
+          description: Where the provider originally delivered the message.
+          enum:
+          - INBOX
+          - SPAM
+          example: INBOX
+        direction:
+          type: string
+          description: Whether the message originated outside the company.
+          enum:
+          - INBOUND
+          - INTERNAL
+          example: INBOUND
+        message_location:
+          type: string
+          description: Message location at event creation, before any asynchronous remediation completes.
+          enum:
+          - ORIGINAL_DELIVERY_LOCATION
+          - QUARANTINE
+          - SPAM
+          - TRASH
+          example: ORIGINAL_DELIVERY_LOCATION
+    WebhookEnvelopeDataPhishingSimulationReportedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/PhishingSimulationReportedPayload'
+    WebhookEnvelopeDataTrainingEnrollmentCreatedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/TrainingEnrollmentCreatedPayload'
+    WebhookEnvelopeDataTrainingModuleCompletedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/TrainingModuleCompletedPayload'
+    SecurityEventEvidence:
+      description: A piece of evidence supporting a detection reason.
+      properties:
+        label:
+          type: string
+          description: What the evidence refers to. Absent when unavailable.
+          example: Link target
+        value:
+          type: string
+          description: The evidence itself.
+          example: https://billing-verify.example.net/login
+    WebhookEnvelopeAiGovernancePolicyOverriddenPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataAiGovernancePolicyOverriddenPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: ai_governance.policy.overridden
+          description: the event type
+          example: ai_governance.policy.overridden
+    WebhookEnvelopeAiGovernancePolicyTriggeredPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataAiGovernancePolicyTriggeredPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: ai_governance.policy.triggered
+          description: the event type
+          example: ai_governance.policy.triggered
+    WebhookEnvelopeUserGroupJoinedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataUserGroupJoinedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: user.group.joined
+          description: the event type
+          example: user.group.joined
+    UserGroupJoinedPayload:
+      description: A user joined a group. Groups are rule-based, so membership changes whenever user attributes or activity change. When a newly created group is first computed, every matching user emits a join with due_to_group_creation set to true — filter on due_to_group_creation = false to receive only membership changes after that first computation.
+      properties:
+        due_to_group_creation:
+          type: boolean
+          description: True when this join comes from the first computation of a newly created group rather than a subsequent membership change. Most consumers should filter to due_to_group_creation = false.
+          example: false
+        group:
+          $ref: '#/components/schemas/Group'
+        user:
+          $ref: '#/components/schemas/User'
+    TrainingOverduePayload:
+      description: A user's training campaign assignment passed its due date without completion. Fires once per user per campaign; the envelope time is when Adaptive detected the user was overdue.
+      properties:
+        campaign:
+          $ref: '#/components/schemas/TrainingCampaign'
+        due_date:
+          type: string
+          format: date-time
+          description: 'The deadline the user missed (ISO-8601): their assignment''s due date, or the campaign end when the assignment has no explicit due date.'
+          example: '2026-07-01T00:00:00Z'
+        user:
+          $ref: '#/components/schemas/User'
+    SecurityEventAnalysis:
+      description: What Adaptive's analysis concluded about the email message.
+      properties:
+        attack_tactics:
+          type: array
+          description: Tactics observed in the message. Empty for denylist events.
+          example:
+          - vendor_impersonation
+          - credential_harvesting
+          items:
+            type: string
+        attack_type:
+          type: string
+          description: Kind of attack detected.
+          enum:
+          - CALENDAR_PHISHING
+          - CREDENTIAL_PHISHING
+          - DENYLISTED
+          - FINANCIAL_FRAUD
+          - MALWARE_RANSOMWARE
+          - OFF_CHANNEL_PHISHING
+          - PENDING
+          - SAFE_IN_MALICIOUS_GROUP
+          - SCAM
+          - SPAM
+          example: CREDENTIAL_PHISHING
+        confidence:
+          type: integer
+          format: int32
+          description: Detection confidence from 0 to 100. Absent when unavailable.
+          example: 97
+        explanation:
+          $ref: '#/components/schemas/SecurityEventExplanation'
+    WebhookEnvelopePhishingSimulationFailedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataPhishingSimulationFailedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: phishing.simulation.failed
+          description: the event type
+          example: phishing.simulation.failed
+    AiGovernancePolicyTriggeredPayload:
+      description: A user's AI activity matched an AI Governance policy and the policy's action was applied.
+      properties:
+        policy:
+          $ref: '#/components/schemas/GovernancePolicy'
+        product:
+          type: string
+          description: The AI Product the user was using when they triggered the policy.
+          enum:
+          - CHATGPT_CODEX
+          - CHATGPT_CHAT
+          - CHATGPT_AGENTS
+          - CLAUDE_CHAT
+          - CLAUDE_COWORK
+          - CLAUDE_CODE
+          - CLAUDE_DESIGN
+          - COPILOT_CHAT
+          - CURSOR_CHAT
+          - CURSOR_AGENTS
+          - GEMINI_CHAT
+          - KIRO_WEB
+          - KIRO_CLI
+          - KIRO_CREW
+          - M365_COPILOT_CHAT
+          - M365_COPILOT_EMBEDDED
+          - PERPLEXITY_CHAT
+          - PERPLEXITY_COMPUTER
+          - DEEPSEEK_CHAT
+          - GROK_CHAT
+          - QWEN_CHAT
+          - ABACUS_CHAT
+          - CANVA_CHAT
+          - LOVABLE_CHAT
+          - REPLIT_CHAT
+          - GRAMMARLY_CHAT
+          - NOTION_CHAT
+          - RIPPLING_CHAT
+          - USE_AI_CHAT
+          - GOVAI_CHAT
+          - SHAKUDO_CHAT
+          example: CLAUDE_CODE
+        triggered_at:
+          type: string
+          format: date-time
+          description: When the policy triggered (ISO-8601).
+          example: '2026-06-09T18:00:00Z'
+        user:
+          $ref: '#/components/schemas/User'
+    WebhookEnvelopeDataAiGovernancePolicyOverriddenPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/AiGovernancePolicyOverriddenPayload'
+    WebhookEnvelopeUserGroupLeftPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataUserGroupLeftPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: user.group.left
+          description: the event type
+          example: user.group.left
+    WebhookEnvelopeTrainingCompletedPayload:
+      description: The CloudEvents envelope wrapping every webhook event
+      properties:
+        data:
+          $ref: '#/components/schemas/WebhookEnvelopeDataTrainingCompletedPayload'
+        datacontenttype:
+          type: string
+          description: media type of `data`
+          example: application/json
+        id:
+          type: string
+          description: unique id for event
+          example: 9b2f6c1e-8d3a-4f0b-a1c2-5e7d9f3b6a48
+        source:
+          type: string
+          description: the event source; always `/adaptive`
+          example: /adaptive
+        specversion:
+          type: string
+          description: CloudEvents spec version
+          example: '1.0'
+        subject:
+          type: string
+          description: reserved for the event's primary entity id; currently never set, so always omitted
+        time:
+          type: string
+          format: date-time
+          description: when the event occurred
+          example: '2026-06-09T18:00:00Z'
+        type:
+          type: string
+          const: training.completed
+          description: the event type
+          example: training.completed
+    TrainingCampaign:
+      description: The training campaign the event concerns.
+      properties:
+        id:
+          type: string
+          description: Unique Adaptive identifier for the training campaign. Fetch campaign details from the Public API (GET /v2/training/campaigns/{campaignId}).
+          example: 6c1d9a4e-2f7b-4d3a-9e8c-5b0a7f2d1c43
+        name:
+          type: string
+          description: Human-readable name of the training campaign.
+          example: Q3 Security Essentials
+    WebhookEnvelopeDataPhishingFailureRemovedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/PhishingFailureRemovedPayload'
+    WebhookEnvelopeDataTrainingOverduePayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/TrainingOverduePayload'
+    WebhookEnvelopeDataPhishingSimulationFailedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/PhishingSimulationFailedPayload'
+    TrainingModuleCompletedPayload:
+      description: A user completed one assigned module within a training campaign. The envelope time is the module completion time.
+      properties:
+        campaign:
+          $ref: '#/components/schemas/TrainingCampaign'
+        completed_at:
+          type: string
+          format: date-time
+          description: When the user completed the module (ISO-8601).
+          example: '2026-06-09T18:00:00Z'
+        manually_completed:
+          type: boolean
+          description: True when an admin marked the module complete on the user's behalf rather than the user finishing the content themselves.
+          example: false
+        module:
+          $ref: '#/components/schemas/TrainingModule'
+        user:
+          $ref: '#/components/schemas/User'
+    ClientInfo:
+      description: Client context captured from the originating interaction, such as the originating IP address and the parsed user agent.
+      properties:
+        browser:
+          type: string
+          description: Browser parsed from the interaction's user agent.
+          example: Chrome
+        browser_version:
+          type: string
+          description: Browser version parsed from the interaction's user agent.
+          example: '125'
+        device:
+          type: string
+          description: Device type parsed from the interaction's user agent.
+          example: Mac
+        ip:
+          type: string
+          description: IP address the interaction originated from.
+          example: 203.0.113.42
+        os:
+          type: string
+          description: Operating system parsed from the interaction's user agent.
+          example: macOS
+        os_version:
+          type: string
+          description: Operating system version parsed from the interaction's user agent.
+          example: '14.5'
+    WebhookEnvelopeDataUserGroupJoinedPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/UserGroupJoinedPayload'
+    WebhookEnvelopeDataAiGovernancePolicyTriggeredPayload:
+      description: 'The data member of the CloudEvents envelope: the event payload plus the subscription''s custom data'
+      properties:
+        customdata:
+          $ref: '#/components/schemas/JsonNode'
+        payload:
+          $ref: '#/components/schemas/AiGovernancePolicyTriggeredPayload'
+    GovernancePolicy:
+      description: The AI Governance policy the event concerns.
+      properties:
+        id:
+          type: string
+          description: Unique Adaptive identifier for the policy.
+          example: 3b9f2c7d-6e1a-4f58-a2c4-9d7e1b0f5a36
+        name:
+          type: string
+          description: Admin-specified name of the policy.
+          example: Block personal ChatGPT accounts
+        type:
+          type: string
+          description: What the policy detects.
+          enum:
+          - PERSONAL_ACCOUNT
+          - UNAPPROVED_AI_APP
+          - SENSITIVE_DATA
+          example: PERSONAL_ACCOUNT
+  securitySchemes:
+    bearer-token:
+      description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
+      scheme: bearer
+      type: http

@@ -1,0 +1,443 @@
+openapi: 3.2.0
+info:
+  description: Adaptive API for external integrations.
+  title: Adaptive Groups API
+  version: v2
+servers:
+- url: https://api.adaptivesecurity.com
+  description: Production API
+security:
+- bearer-token: []
+tags:
+- description: BETAUser group management endpoints
+  name: Groups
+paths:
+  /v2/groups:
+    get:
+      description: BETARetrieve a paginated list of user groups
+      operationId: listGroups
+      parameters:
+      - description: Page cursor
+        example: 456e7890-f12b-34c5-d678-901234567890
+        in: query
+        name: page_after
+        required: false
+        schema:
+          type: string
+      - description: Page size
+        example: 50
+        in: query
+        name: page_size
+        required: false
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                Success Response:
+                  description: Success Response
+                  value:
+                    groups:
+                    - id: 123e4567-e89b-12d3-a456-426614174000
+                      display_name: Engineering Team
+                      type: GENERAL
+                      created_at: '2024-01-15T08:30:00Z'
+                      last_refresh_at: '2024-12-01T10:15:00Z'
+                    - id: 456e7890-f12b-34c5-d678-901234567890
+                      display_name: Repeat Phish Failures
+                      type: REMEDIATION
+                      created_at: '2024-03-01T09:00:00Z'
+                      last_refresh_at: '2024-11-15T14:30:00Z'
+                    page_after: 456e7890-f12b-34c5-d678-901234567890
+              schema:
+                $ref: '#/components/schemas/GroupListResponseDto'
+          description: Successfully retrieved groups
+        '400':
+          content:
+            application/json:
+              examples:
+                Validation Error:
+                  description: Validation Error
+                  value:
+                    error_code: VALIDATION_ERROR
+                    message: Request validation failed
+                    status_code: 400
+                    request_id: 5f8e9a7b-1c2d-3e4f-5a6b-7c8d9e0f1a2b
+                    details:
+                    - field: page_size
+                      message: Page size must be greater than or equal to 1
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponseDto'
+          description: Bad request - Invalid parameters
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '429':
+          content:
+            application/json:
+              examples:
+                Rate Limit Error:
+                  description: Rate Limit Error
+                  value:
+                    error_code: RATE_LIMIT_EXCEEDED
+                    message: API rate limit exceeded. Please retry after some time
+                    status_code: 429
+                    request_id: b7c1196e-2c6e-4d17-8f3c-fcb62d6d27a2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Too many requests - Rate limit exceeded
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: List groups
+      tags:
+      - Groups
+  /v2/groups/{groupId}:
+    get:
+      description: BETARetrieve detailed information about a specific group
+      operationId: getGroup
+      parameters:
+      - description: Group ID
+        example: 123e4567-e89b-12d3-a456-426614174000
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                Success Response:
+                  description: Success Response
+                  value:
+                    id: 9f3d18ac-654e-4a0d-b8e9-90dbe7548c1d
+                    display_name: High Risk Users
+                    type: GENERAL
+                    created_at: '2025-04-02T15:02:38.000Z'
+                    last_refresh_at: '2025-06-26T15:02:38.000Z'
+              schema:
+                $ref: '#/components/schemas/GroupDto'
+          description: Successfully retrieved group details
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          content:
+            application/json:
+              examples:
+                Not Found Error:
+                  description: Not Found Error
+                  value:
+                    error_code: RESOURCE_NOT_FOUND
+                    message: The requested group was not found
+                    status_code: 404
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Group not found
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Get group details
+      tags:
+      - Groups
+  /v2/groups/{groupId}/users:
+    get:
+      description: BETARetrieve a paginated list of users in a specific group
+      operationId: getGroupMembers
+      parameters:
+      - description: Group ID
+        example: 123e4567-e89b-12d3-a456-426614174000
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - description: Page cursor
+        example: 456e7890-f12b-34c5-d678-901234567890
+        in: query
+        name: page_after
+        required: false
+        schema:
+          type: string
+      - description: Page size
+        example: 100
+        in: query
+        name: page_size
+        required: false
+        schema:
+          type: integer
+          default: 100
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                Success Response:
+                  description: Success Response
+                  value:
+                    users:
+                    - id: a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6
+                      email: john@example.com
+                      joined_at: '2025-04-02T15:02:38.000Z'
+                    - id: b2c3d4e5-f6g7-8h9i-0j1k-l2m3n4o5p6q7
+                      email: jane@example.com
+                      joined_at: '2025-04-15T09:30:12.000Z'
+                    page_after: b2c3d4e5-f6g7-8h9i-0j1k-l2m3n4o5p6q7
+              schema:
+                $ref: '#/components/schemas/GroupUsersResponseDto'
+          description: Successfully retrieved group users
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          content:
+            application/json:
+              examples:
+                Not Found Error:
+                  description: Not Found Error
+                  value:
+                    error_code: RESOURCE_NOT_FOUND
+                    message: The requested group was not found
+                    status_code: 404
+                    request_id: 8a9b1c2d-3e4f-5a6b-7c8d-9e0f1a2b3c4d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Group not found
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Get group users
+      tags:
+      - Groups
+components:
+  schemas:
+    GroupListResponseDto:
+      type: object
+      description: Paginated list of groups
+      properties:
+        groups:
+          type: array
+          description: List of groups
+          items:
+            $ref: '#/components/schemas/GroupDto'
+        page_after:
+          type: string
+          description: Cursor for the next page
+          example: 456e7890-f12b-34c5-d678-901234567890
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
+    GroupUsersResponseDto:
+      type: object
+      description: Paginated list of users in a group
+      properties:
+        page_after:
+          type: string
+          description: Cursor for the next page
+          example: 615d6dd4-0045-48f8-90a9-6aba093b7676
+        users:
+          type: array
+          description: List of users in the group
+          items:
+            $ref: '#/components/schemas/GroupUserDto'
+    GroupUserDto:
+      type: object
+      description: User information within a group
+      properties:
+        email:
+          type: string
+          description: User email address
+          example: john@example.com
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: 615d6dd4-0045-48f8-90a9-6aba093b7676
+        joined_at:
+          type: string
+          format: date-time
+          description: Date when the user joined the group
+          example: '2025-04-02T15:02:38.000Z'
+    GroupDto:
+      type: object
+      description: User group information
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: Group creation date
+          example: '2024-01-15T08:30:00Z'
+        display_name:
+          type: string
+          description: Group name
+          example: Engineering Team
+        id:
+          type: string
+          description: Unique identifier for the group
+          example: 123e4567-e89b-12d3-a456-426614174000
+        last_refresh_at:
+          type: string
+          format: date-time
+          description: Group membership last updated date (can be null if initial membership calculation is still in progress)
+          example: '2024-12-01T10:15:00Z'
+        status:
+          type: string
+          description: Group status
+          enum:
+          - ACTIVE
+          - ARCHIVED
+          example: ACTIVE
+        type:
+          type: string
+          description: Group type
+          enum:
+          - GENERAL
+          - NEW_HIRE
+          - REMEDIATION
+          example: GENERAL
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+  securitySchemes:
+    bearer-token:
+      description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
+      scheme: bearer
+      type: http

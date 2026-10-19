@@ -1,0 +1,1570 @@
+openapi: 3.2.0
+info:
+  description: 'Adaptive API for external integrations. ## 📊 API Overview
+
+
+    The Adaptive API gives your organization programmatic access to its Adaptive data. Use this RESTful API to report on security awareness training and phishing simulations, sync users and groups with your other systems, review admin activity, and act on email security detections. ### Purpose & Use Cases
+
+
+    This API is designed for:
+
+    - **Compliance Reporting**: Track training completion rates and identify employees with overdue trainings
+
+    - **Progress Monitoring**: Get real-time visibility into individual and team training progress
+
+    - **Data Integration**: Sync training data with your HRIS, BI tools, or custom dashboards
+
+    - **Automated Workflows**: Build alerts and notifications for training milestones or compliance deadlines
+
+
+    ### Technical Design
+
+
+    The API follows REST principles with:
+
+    - Resource-oriented URLs that clearly represent your data
+
+    - Standard HTTP methods
+
+    - JSON responses for easy parsing and integration
+
+    - Consistent error handling with detailed error messages
+
+    - Token-based authentication for secure access
+
+
+    ### Available Resources
+
+
+    | Resource | Purpose | Common Use Cases |
+
+    |----------|---------|------------------|
+
+    | **Users** | Access employee directory data | • Export user lists for reporting
+
+    • Track user status changes
+
+    • Map users to departments |
+
+    | **Groups** | Access user groups and their members | • Map users to the groups campaigns target
+
+    • Sync group membership with your directory or HRIS |
+
+    | **Training** | Monitor training campaigns and progress | • Track campaign completion rates
+
+    • Identify at-risk employees
+
+    • Generate compliance reports |
+
+    | **Phishing** | Monitor phishing campaigns, simulations, and per-user results | • Track click, report, and failure rates
+
+    • Identify users who failed a simulation
+
+    • Report on campaign outcomes |
+
+    | **Audit Logs** | Review admin actions taken in Adaptive | • Send admin activity to your SIEM
+
+    • Review configuration changes for compliance |
+
+    | **Email Security** | Act on detected security events and manage sender rules | • Pull detection details into an investigation
+
+    • Remediate, or undo the remediation of, a malicious email from a SOAR playbook
+
+    • Manage sender allow and deny lists |
+
+    | **Webhooks** | Receive events as they happen instead of polling | • Trigger SIEM detections and SOAR playbooks
+
+    • React to failed simulations, completed or overdue training, and new security events |
+
+
+    ## 🚀 Quick Start Guide
+
+
+    Get started with the Adaptive API in just 3 steps:
+
+
+    ### Step 1: Get Your API Token
+
+    See Authentication for more details on how to generate and use API tokens. ### Step 2: Make Your First API Call
+
+    ```bash
+
+    curl -X GET https://api.adaptivesecurity.com/v2/users \
+
+    -H "Authorization: Bearer YOUR_API_TOKEN"
+
+    ```
+
+
+    ### Step 3: Handle the Response
+
+    ```json
+
+    {
+
+    "users": [
+
+    {
+
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+
+    "email": "john.smith@example.com",
+
+    "first_name": "John",
+
+    "last_name": "Smith",
+
+    "status": "ACTIVE"
+
+    }
+
+    ],
+
+    "page_after": "123e4567-e89b-12d3-a456-426614174000"
+
+    }
+
+    ```
+
+
+    ## 🔐 Authentication
+
+
+    All API endpoints require authentication using an API token:
+
+
+    ```http
+
+    Authorization: Bearer YOUR_API_TOKEN
+
+    ```
+
+
+    **Token Management:**
+
+    - Tokens are generated in the Admin portal under **Settings → API**
+
+    - Tokens have a user-set expiration but can be revoked at any time
+
+    - Store tokens securely - treat them like passwords
+
+
+    **Permissions:**
+
+
+    Tokens are assigned permissions that limit the scope of the actions they can be used to take. You can choose the permissions a token is assigned when it''s created and edit them after creation. Each endpoint''s documentation lists which permissions are required to use it. As a best practice, only grant tokens the permissions they need and nothing more. For example, if only using the API to read data, don''t grant your token `:write`-level permissions.'
+  title: Adaptive Email Security API
+  version: v2
+servers:
+- url: https://api.adaptivesecurity.com
+  description: Production API
+security:
+- bearer-token: []
+tags:
+- description: Email Security detections and company-configured email security rules
+  name: Email Security
+paths:
+  /v2/email-security/security-events/{eventId}:
+    get:
+      description: 'Retrieve a single Email Security detection by its identifier.
+
+
+        **Required permission:** `email_security:read`'
+      operationId: getSecurityEvent
+      parameters:
+      - description: Security event ID
+        example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        in: path
+        name: eventId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventDto'
+          description: Successfully retrieved the security event
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '403':
+          content:
+            application/json:
+              examples:
+                Forbidden:
+                  description: Forbidden
+                  value:
+                    error_code: INSUFFICIENT_PERMISSIONS
+                    message: Email Security data is not available for this company
+                    status_code: 403
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Email Security is not available for this company
+        '404':
+          content:
+            application/json:
+              examples:
+                Not Found Error:
+                  description: Not Found Error
+                  value:
+                    error_code: RESOURCE_NOT_FOUND
+                    message: The requested security event was not found
+                    status_code: 404
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Security event not found
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Get a security event
+      tags:
+      - Email Security
+  /v2/email-security/security-events/{eventId}/remediate:
+    post:
+      description: 'Move every recipient''s copy of a security event''s message to trash, spam, or quarantine. The event must be awaiting review, its source connected, and remediation enabled for the company. Remediation runs asynchronously: the response reports REMEDIATING, and the event reaches RESOLVED once every recipient has been remediated.
+
+
+        **Required permission:** `email_security:write`'
+      operationId: remediateSecurityEvent
+      parameters:
+      - description: Security event ID
+        example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        in: path
+        name: eventId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemediateSecurityEventRequestDto'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventRemediationDto'
+          description: Remediation started
+        '400':
+          content:
+            application/json:
+              examples:
+                Validation Error:
+                  description: Validation Error
+                  value:
+                    error_code: VALIDATION_ERROR
+                    message: Request validation failed
+                    status_code: 400
+                    request_id: 5f8e9a7b-1c2d-3e4f-5a6b-7c8d9e0f1a2b
+                    details:
+                    - field: action
+                      message: Required parameter 'action' is missing
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponseDto'
+          description: Missing or unknown action, the event's source or company settings do not allow the remediation, remediate_future_similar_messages was requested for an event with no campaign, MARK_AS_SPAM was requested while remediation is enabled, a similar-message option was set with MARK_AS_SAFE or MARK_AS_SPAM, or a spam event was sent MARK_AS_SPAM, a similar-message option, or a request while spam remediation is not enabled
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '403':
+          content:
+            application/json:
+              examples:
+                Forbidden:
+                  description: Forbidden
+                  value:
+                    error_code: INSUFFICIENT_PERMISSIONS
+                    message: Email Security data is not available for this company
+                    status_code: 403
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Missing EMAIL_SECURITY_WRITE permission, or Email Security is not available for this company
+        '404':
+          content:
+            application/json:
+              examples:
+                Not Found Error:
+                  description: Not Found Error
+                  value:
+                    error_code: RESOURCE_NOT_FOUND
+                    message: The requested security event was not found
+                    status_code: 404
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Security event not found
+        '409':
+          content:
+            application/json:
+              examples:
+                Already Reviewed:
+                  description: Already Reviewed
+                  value:
+                    error_code: RESOURCE_CONFLICT
+                    message: 'Security event a8f2947c-3aef-4f5a-981f-08be76fde32f is already RESOLVED (last action: MARK_AS_SAFE); only events in NEEDS_REVIEW can be remediated or marked'
+                    status_code: 409
+                    request_id: 29cebbbd-f573-470b-8934-da1a78ca1a34
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: The event is no longer awaiting review because it was already remediated or marked
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Remediate a security event
+      tags:
+      - Email Security
+  /v2/email-security/security-events/{eventId}/undo-remediation:
+    post:
+      description: 'Restore every recipient''s copy of a security event''s message to where it was before it was moved to trash, spam, or quarantine. The event must be resolved with its message in trash, spam, or quarantine, its latest remediation must not have failed, and its source must be connected with read-write scopes. The undo runs asynchronously: the response reports REMEDIATING, and the event returns to NEEDS_REVIEW once every recipient''s copy has been restored.
+
+
+        **Required permission:** `email_security:write`'
+      operationId: undoSecurityEventRemediation
+      parameters:
+      - description: Security event ID
+        example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        in: path
+        name: eventId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventRemediationUndoDto'
+          description: Undo started
+        '400':
+          content:
+            application/json:
+              examples:
+                Source Not Connected:
+                  description: Source Not Connected
+                  value:
+                    error_code: BAD_REQUEST
+                    message: Security event a8f2947c-3aef-4f5a-981f-08be76fde32f cannot have its remediation undone because its source is not connected
+                    status_code: 400
+                    request_id: 5f8e9a7b-1c2d-3e4f-5a6b-7c8d9e0f1a2b
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: The event's source is not connected or not provisioned with read-write scopes
+        '401':
+          content:
+            application/json:
+              examples:
+                Unauthorized Error:
+                  description: Unauthorized Error
+                  value:
+                    error_code: INVALID_TOKEN
+                    message: The provided authentication token is invalid or expired
+                    status_code: 401
+                    request_id: dcaf9f7e-6c47-4c93-bb41-0e2d8d9bb0de
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Unauthorized - Invalid or missing authentication token
+        '403':
+          content:
+            application/json:
+              examples:
+                Forbidden:
+                  description: Forbidden
+                  value:
+                    error_code: INSUFFICIENT_PERMISSIONS
+                    message: Email Security data is not available for this company
+                    status_code: 403
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Missing EMAIL_SECURITY_WRITE permission, or Email Security is not available for this company
+        '404':
+          content:
+            application/json:
+              examples:
+                Not Found Error:
+                  description: Not Found Error
+                  value:
+                    error_code: RESOURCE_NOT_FOUND
+                    message: The requested security event was not found
+                    status_code: 404
+                    request_id: 2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Security event not found
+        '409':
+          content:
+            application/json:
+              examples:
+                Not Resolved:
+                  description: Not Resolved
+                  value:
+                    error_code: RESOURCE_CONFLICT
+                    message: Security event a8f2947c-3aef-4f5a-981f-08be76fde32f is NEEDS_REVIEW; only RESOLVED events can have their remediation undone
+                    status_code: 409
+                    request_id: 29cebbbd-f573-470b-8934-da1a78ca1a34
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: The event is not resolved, its message was not moved, or its latest remediation failed, so there is no remediation to undo
+        '429':
+          content:
+            application/json:
+              examples:
+                Rate Limit Error:
+                  description: Rate Limit Error
+                  value:
+                    error_code: RATE_LIMIT_EXCEEDED
+                    message: API rate limit exceeded. Please retry after some time
+                    status_code: 429
+                    request_id: 0d47b5d3-884b-42c5-a20a-04e47011ebf4
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Too many requests - Rate limit exceeded
+        '500':
+          content:
+            application/json:
+              examples:
+                Internal Server Error:
+                  description: Internal Server Error
+                  value:
+                    error_code: INTERNAL_SERVER_ERROR
+                    message: An unexpected error occurred. Please try again later
+                    status_code: 500
+                    request_id: f351ac3c-cd5e-4ec7-89dc-191fc40a83f2
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Undo a security event's remediation
+      tags:
+      - Email Security
+  /v2/email-security/settings/rules:
+    get:
+      description: 'Returns enabled, company-configured, non-deleted sender rules ordered by creation time. Adaptive-configured rules are excluded. Omit listType to return both allow and deny rules. Response fields use snake_case.
+
+
+        **Required permission:** `email_security:read`'
+      operationId: listRules
+      parameters:
+      - description: Filter to ALLOW or DENY rules
+        example: ALLOW
+        in: query
+        name: listType
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+          enum:
+          - ALLOW
+          - DENY
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                rules:
+                - id: a785a60e-a8ba-4750-8607-e9e977b9e0c4
+                  name: Trusted partner domain
+                  value: example.com
+                  rule_type: DOMAIN
+                  auth_requirement: AUTHENTICATED
+                  header_rules:
+                    rules:
+                    - header: X-Partner
+                      value: trusted
+                      value_type: STATIC
+                    - header: X-Partner-Id
+                      value: ^acme-[0-9]{4}$
+                      value_type: REGEX
+                    operator: AND
+                  list_type: ALLOW
+                  updated: '2026-09-23T15:00:00Z'
+                  created: '2026-09-22T14:00:00Z'
+              schema:
+                $ref: '#/components/schemas/EmailSenderRuleListResponseDto'
+          description: Successfully retrieved rules. Returns an empty rules array when no rules match.
+        '400':
+          content:
+            application/json:
+              example:
+                error_code: VALIDATION_ERROR
+                message: Request validation failed
+                status_code: 400
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+                details:
+                - field: listType
+                  message: Invalid format for parameter 'listType'
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponseDto'
+          description: Invalid listType
+        '401':
+          content:
+            application/json:
+              example:
+                error_code: AUTHENTICATION_FAILED
+                message: Invalid/missing credentials
+                status_code: 401
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Invalid or missing authentication token
+        '403':
+          content:
+            application/json:
+              example:
+                error_code: INSUFFICIENT_PERMISSIONS
+                message: Company 123 is not enabled for Email Security
+                status_code: 403
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Company is not enabled for Email Security
+        '429':
+          content:
+            application/json:
+              example:
+                error_code: RATE_LIMIT_EXCEEDED
+                message: Rate limit exceeded. Please slow down and try again later.
+                status_code: 429
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Rate limit exceeded
+        '500':
+          content:
+            application/json:
+              example:
+                error_code: INTERNAL_SERVER_ERROR
+                message: Internal server error
+                status_code: 500
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: List email security rules
+      tags:
+      - Email Security
+    post:
+      description: 'Creates one enabled allow-list or deny-list rule. Requires EMAIL_SECURITY_WRITE. DMI_HEADER rules require header conditions and the ALLOW list. Deny and IP rules always use NONE authentication; DMI_HEADER uses AUTHENTICATED. Domain and email allow rules preserve the requested authentication requirement. IP ranges are canonicalized. Existing rules on either list cause a conflict. Returns the same rule representation as the list endpoint. Fields use snake_case.
+
+
+        **Required permission:** `email_security:write`'
+      operationId: createRule
+      requestBody:
+        content:
+          application/json:
+            example:
+              value: example.com
+              name: Trusted partner domain
+              rule_type: DOMAIN
+              auth_requirement: AUTHENTICATED
+              header_rules:
+                rules:
+                - header: X-Partner
+                  value: trusted
+                  value_type: STATIC
+                - header: X-Partner-Id
+                  value: ^acme-[0-9]{4}$
+                  value_type: REGEX
+                operator: AND
+              list_type: ALLOW
+            schema:
+              $ref: '#/components/schemas/CreateEmailSenderRuleRequestDto'
+        description: Rule to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                id: a785a60e-a8ba-4750-8607-e9e977b9e0c4
+                name: Trusted partner domain
+                value: example.com
+                rule_type: DOMAIN
+                auth_requirement: AUTHENTICATED
+                header_rules:
+                  rules:
+                  - header: X-Partner
+                    value: trusted
+                    value_type: STATIC
+                  - header: X-Partner-Id
+                    value: ^acme-[0-9]{4}$
+                    value_type: REGEX
+                  operator: AND
+                list_type: ALLOW
+                updated: '2026-09-24T15:00:00Z'
+                created: '2026-09-24T15:00:00Z'
+              schema:
+                $ref: '#/components/schemas/EmailSenderRuleDto'
+          description: Rule created
+        '400':
+          content:
+            application/json:
+              example:
+                error_code: BAD_REQUEST
+                message: Invalid input
+                status_code: 400
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Invalid request body or rule value
+        '401':
+          content:
+            application/json:
+              example:
+                error_code: AUTHENTICATION_FAILED
+                message: Invalid/missing credentials
+                status_code: 401
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Invalid or missing authentication token
+        '403':
+          content:
+            application/json:
+              example:
+                error_code: INSUFFICIENT_PERMISSIONS
+                message: Access denied
+                status_code: 403
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Missing write permission or Email Security is not enabled
+        '409':
+          content:
+            application/json:
+              example:
+                error_code: RESOURCE_CONFLICT
+                message: Sender rule already exists on list ALLOW
+                status_code: 409
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: A matching rule already exists on either list
+        '429':
+          content:
+            application/json:
+              example:
+                error_code: RATE_LIMIT_EXCEEDED
+                message: Rate limit exceeded. Please slow down and try again later.
+                status_code: 429
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Rate limit exceeded
+        '500':
+          content:
+            application/json:
+              example:
+                error_code: INTERNAL_SERVER_ERROR
+                message: Internal server error
+                status_code: 500
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Create an email security rule
+      tags:
+      - Email Security
+  /v2/email-security/settings/rules/{id}:
+    delete:
+      description: 'Soft-deletes one company-configured sender rule by ID. Requires EMAIL_SECURITY_WRITE. Adaptive-configured rules cannot be deleted through this endpoint.
+
+
+        **Required permission:** `email_security:write`'
+      operationId: deleteRule
+      parameters:
+      - description: Rule ID
+        example: a785a60e-a8ba-4750-8607-e9e977b9e0c4
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Rule deleted
+        '400':
+          content:
+            application/json:
+              example:
+                error_code: VALIDATION_ERROR
+                message: Request validation failed
+                status_code: 400
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+                details:
+                - field: id
+                  message: Invalid format for parameter 'id'
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponseDto'
+          description: Invalid rule ID
+        '401':
+          content:
+            application/json:
+              example:
+                error_code: AUTHENTICATION_FAILED
+                message: Invalid/missing credentials
+                status_code: 401
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Invalid or missing authentication token
+        '403':
+          content:
+            application/json:
+              example:
+                error_code: INSUFFICIENT_PERMISSIONS
+                message: Access denied
+                status_code: 403
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Missing write permission or Email Security is not enabled
+        '404':
+          content:
+            application/json:
+              example:
+                error_code: RESOURCE_NOT_FOUND
+                message: Entity not found
+                status_code: 404
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Rule not found
+        '429':
+          content:
+            application/json:
+              example:
+                error_code: RATE_LIMIT_EXCEEDED
+                message: Rate limit exceeded. Please slow down and try again later.
+                status_code: 429
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Rate limit exceeded
+        '500':
+          content:
+            application/json:
+              example:
+                error_code: INTERNAL_SERVER_ERROR
+                message: Internal server error
+                status_code: 500
+                request_id: 473f9b6e-8b38-4dc3-a32a-1705f5d9db3c
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+          description: Internal server error
+      summary: Delete an email security rule
+      tags:
+      - Email Security
+components:
+  schemas:
+    HeaderMatchRuleSetDto:
+      type: object
+      description: Header conditions attached to a sender rule
+      properties:
+        operator:
+          type: string
+          description: How to combine conditions; always AND for one condition
+          enum:
+          - AND
+          - OR
+          example: AND
+        rules:
+          type: array
+          description: Header conditions
+          items:
+            $ref: '#/components/schemas/HeaderMatchRuleDto'
+      required:
+      - operator
+      - rules
+    EmailSenderRuleListResponseDto:
+      type: object
+      description: Email security sender rules
+      properties:
+        rules:
+          type: array
+          description: Matching rules ordered by creation time
+          items:
+            $ref: '#/components/schemas/EmailSenderRuleDto'
+      required:
+      - rules
+    SecurityEventDto:
+      type: object
+      description: An Email Security detection an admin may need to action
+      properties:
+        adaptive_url:
+          type: string
+          description: Link to view this security event in Adaptive
+          example: https://admin.adaptivesecurity.com/email-security/security-events/a8f2947c-3aef-4f5a-981f-08be76fde32f
+        analysis:
+          $ref: '#/components/schemas/SecurityEventAnalysisDto'
+          description: What Adaptive's analysis concluded
+        created:
+          type: string
+          format: date-time
+          description: When the event was created
+          example: '2026-09-15T22:19:04.212168Z'
+        delivery:
+          $ref: '#/components/schemas/SecurityEventDeliveryDto'
+          description: How and where the message was delivered
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the security event
+          example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        integration:
+          $ref: '#/components/schemas/SecurityEventIntegrationDto'
+          description: The integration the message was delivered to
+        message:
+          $ref: '#/components/schemas/SecurityEventMessageDto'
+          description: The email message behind the event
+        review:
+          $ref: '#/components/schemas/SecurityEventReviewDto'
+          description: Where the event sits in the review workflow
+        source:
+          type: string
+          description: What caused the event to be created
+          enum:
+          - DETECTION
+          - USER_REPORT
+          - SIMILAR_FETCH
+          - DENYLIST
+          example: DETECTION
+        version:
+          type: integer
+          format: int32
+          description: DTO version, incremented when the shape changes
+          example: 1
+    SecurityEventIntegrationDto:
+      type: object
+      description: The email integration the message was delivered to
+      properties:
+        display_name:
+          type:
+          - string
+          - 'null'
+          description: Name the admin gave the integration
+          example: Acme Google Workspace
+        id:
+          type: string
+          format: uuid
+          description: Integration identifier
+          example: 72f66c91-6aec-4561-9395-3b5b7d3b2b70
+        provider:
+          type: string
+          description: Email provider
+          enum:
+          - GOOGLE
+          - MICROSOFT
+          example: GOOGLE
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
+    SecurityEventOpenedStatusDto:
+      type: object
+      description: Whether recipients have opened the message, as of the last poll
+      properties:
+        first_seen_opened_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the message was first seen opened
+          example: '2026-09-15T22:19:05.019434Z'
+        is_opened:
+          type:
+          - boolean
+          - 'null'
+          description: Whether the message has been opened
+          example: false
+        last_checked_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When open-tracking last polled
+          example: '2026-09-15T22:19:05.019434Z'
+        opened_count:
+          type: integer
+          format: int32
+          description: Recipients who opened the message
+          example: 0
+        poll_status:
+          type: string
+          description: State of open-tracking polling
+          enum:
+          - POLLING
+          - DONE
+          - EXPIRED
+          - FAILED
+          example: DONE
+    SecurityEventReasonDto:
+      type: object
+      description: One reason the message was classified the way it was
+      properties:
+        detail:
+          type: string
+          description: Full explanation of the reason
+        evidence:
+          type: array
+          description: Evidence supporting this reason
+          items:
+            $ref: '#/components/schemas/SecurityEventEvidenceDto'
+        headline:
+          type: string
+          description: Short summary of the reason
+          example: Conference attendee list sales lure
+    HeaderMatchRuleDto:
+      type: object
+      description: A header condition
+      properties:
+        header:
+          type: string
+          description: Header name
+          example: X-Partner
+        value:
+          type: string
+          description: Value or regular expression to match
+          example: trusted
+        value_type:
+          type: string
+          description: How to match the value
+          enum:
+          - STATIC
+          - REGEX
+          example: STATIC
+      required:
+      - header
+      - value
+      - value_type
+    SecurityEventDeliveryDto:
+      type: object
+      description: How and where the message was delivered
+      properties:
+        category:
+          type: string
+          description: Where the provider originally delivered the message
+          enum:
+          - INBOX
+          - SPAM
+          example: INBOX
+        direction:
+          type: string
+          description: Whether the message originated outside the company
+          enum:
+          - INBOUND
+          - INTERNAL
+          example: INBOUND
+        message_location:
+          type: string
+          description: Where the message sits now
+          enum:
+          - ORIGINAL_DELIVERY_LOCATION
+          - QUARANTINE
+          - SPAM
+          - TRASH
+          example: QUARANTINE
+        opened_status:
+          $ref: '#/components/schemas/SecurityEventOpenedStatusDto'
+          description: Open-tracking state
+        recipient_mailboxes:
+          type: array
+          description: Mailboxes the message currently occupies across all recipients
+          items:
+            type: string
+    SecurityEventExplanationDto:
+      type: object
+      description: Why the message was classified the way it was
+      properties:
+        reasons:
+          type: array
+          description: Individual reasons behind the classification
+          items:
+            $ref: '#/components/schemas/SecurityEventReasonDto'
+        summary:
+          type: string
+          description: One-paragraph summary of the detection
+    EmailSenderRuleDto:
+      type: object
+      description: Email security sender rule
+      properties:
+        auth_requirement:
+          type: string
+          description: Sender authentication requirement
+          enum:
+          - AUTHENTICATED
+          - NONE
+          example: AUTHENTICATED
+        created:
+          type: string
+          format: date-time
+          description: Creation time
+          example: '2026-09-22T14:00:00Z'
+        header_rules:
+          type: 'null'
+          $ref: '#/components/schemas/HeaderMatchRuleSetDto'
+          description: Additional header conditions, or null when absent
+        id:
+          type: string
+          format: uuid
+          description: Rule identifier
+          example: a785a60e-a8ba-4750-8607-e9e977b9e0c4
+        list_type:
+          type: string
+          description: Whether the rule allows or denies matching mail
+          enum:
+          - ALLOW
+          - DENY
+          example: ALLOW
+        name:
+          type: string
+          description: Display name
+          example: My custom rule
+        rule_type:
+          type: string
+          description: Kind of sender match
+          enum:
+          - DMI_HEADER
+          - DOMAIN
+          - EMAIL
+          - IP
+          - IP_RANGE
+          example: DOMAIN
+        updated:
+          type: string
+          format: date-time
+          description: Last update time
+          example: '2026-09-23T15:00:00Z'
+        value:
+          type: string
+          description: Value matched by the rule
+          example: example.com
+      required:
+      - auth_requirement
+      - created
+      - header_rules
+      - id
+      - list_type
+      - name
+      - rule_type
+      - updated
+      - value
+    SecurityEventEvidenceDto:
+      type: object
+      description: A single piece of evidence supporting a detection reason
+      properties:
+        label:
+          type:
+          - string
+          - 'null'
+          description: What the evidence refers to
+          example: Body excerpt
+        value:
+          type: string
+          description: The evidence itself
+          example: would you like to See What is the price?
+    SecurityEventRemediationUndoDto:
+      type: object
+      description: An undo that was started for a security event's remediation
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The security event being restored
+          example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        status:
+          type: string
+          description: Review state after the request. The undo runs asynchronously; poll the security event until it is NEEDS_REVIEW
+          enum:
+          - NEEDS_REVIEW
+          - REMEDIATING
+          - RESOLVED
+          example: REMEDIATING
+    HeaderRulesRequestDto:
+      type: object
+      description: Header conditions for the new rule
+      properties:
+        operator:
+          type:
+          - string
+          - 'null'
+          description: How to combine conditions; defaults to AND
+          enum:
+          - AND
+          - OR
+          example: AND
+        rules:
+          type: array
+          description: Non-empty list of header conditions
+          items:
+            $ref: '#/components/schemas/HeaderMatchRuleDto'
+      required:
+      - rules
+    SecurityEventAttachmentDto:
+      type: object
+      description: An attachment on the message, as recorded when it was scanned
+      properties:
+        content_type:
+          type: string
+          description: MIME type
+          example: application/pdf
+        file_extension:
+          type:
+          - string
+          - 'null'
+          description: Extension parsed from the file name
+          example: pdf
+        name:
+          type: string
+          description: File name
+          example: invoice.pdf
+        scan_result:
+          type: string
+          description: Malware scan outcome
+          enum:
+          - SAFE
+          - MALICIOUS
+          - UNDETERMINED
+          example: SAFE
+        sha256:
+          type: string
+          description: SHA-256 of the file contents
+        size_bytes:
+          type: integer
+          format: int64
+          description: Size in bytes
+          example: 24576
+    SecurityEventReviewDto:
+      type: object
+      description: Where the event sits in the admin review workflow
+      properties:
+        last_remediation_actor:
+          type:
+          - string
+          - 'null'
+          description: Who performed the most recent remediation
+          enum:
+          - ADMIN
+          - AUTO_GROUP_REMEDIATION
+          - MODEL
+          - PUBLIC_API_TOKEN
+          example: ADMIN
+        remediation_error:
+          $ref: '#/components/schemas/SecurityEventRemediationErrorDto'
+          description: Outcome of the most recent remediation, when it reported errors
+        status:
+          type: string
+          description: Review state
+          enum:
+          - NEEDS_REVIEW
+          - REMEDIATING
+          - RESOLVED
+          example: RESOLVED
+    SecurityEventRemediationErrorDto:
+      type: object
+      description: How the most recent remediation turned out across the message's recipients
+      properties:
+        error_type:
+          type: string
+          description: Whether the remediation failed outright or completed with caveats
+          enum:
+          - FAILED
+          - WARNING
+          example: WARNING
+        message:
+          type: string
+          description: Explanation of the outcome
+          example: The email was already deleted by the recipient. There was nothing left to move.
+        title:
+          type: string
+          description: Short headline for the outcome
+          example: Email was already deleted
+    SecurityEventLinkDto:
+      type: object
+      description: A link found in the message
+      properties:
+        display_text:
+          type:
+          - string
+          - 'null'
+          description: Anchor text shown to the recipient
+          example: WWW.CLICK-THIS-LINK.COM
+        source:
+          type: string
+          description: Where the link was found in the email
+          enum:
+          - EMAIL_BODY
+          - PDF_ATTACHMENT
+          example: EMAIL_BODY
+        type:
+          type: string
+          description: The type of link
+          enum:
+          - HYPERLINK
+          - PLAIN_TEXT
+          - QR_CODE
+          example: HYPERLINK
+        url:
+          type: string
+          description: Target URL
+          example: http://www.click-this-link.com/
+    CreateEmailSenderRuleRequestDto:
+      type: object
+      description: A new allow-list or deny-list rule
+      properties:
+        auth_requirement:
+          type: string
+          description: Sender authentication requirement. list_type 'DENY' rules are always NONE, rule_type DMI_HEADER is always AUTHENTICATED
+          enum:
+          - AUTHENTICATED
+          - NONE
+          example: AUTHENTICATED
+        header_rules:
+          type: 'null'
+          $ref: '#/components/schemas/HeaderRulesRequestDto'
+          description: Additional header conditions; required for DMI_HEADER
+        list_type:
+          type: string
+          description: Allow or deny matching mail
+          enum:
+          - ALLOW
+          - DENY
+          example: ALLOW
+        name:
+          type: string
+          description: Display name for the rule
+          example: My custom rule
+        rule_type:
+          type: string
+          description: Kind of sender match
+          enum:
+          - DMI_HEADER
+          - DOMAIN
+          - EMAIL
+          - IP
+          - IP_RANGE
+          example: DOMAIN
+        value:
+          type: string
+          description: Value to match; ignored for DMI_HEADER
+          example: example.com
+      required:
+      - auth_requirement
+      - header_rules
+      - list_type
+      - rule_type
+      - value
+    RemediateSecurityEventRequestDto:
+      type: object
+      description: A remediation to apply to every recipient of a security event's message
+      properties:
+        action:
+          type:
+          - string
+          - 'null'
+          description: Where to move every recipient's copy of the message, or how to mark the event. MARK_AS_SAFE and MARK_AS_SPAM relabel the event without moving any message
+          enum:
+          - DELETE
+          - MARK_AS_SAFE
+          - MARK_AS_SPAM
+          - MOVE_TO_SPAM
+          - QUARANTINE
+          example: QUARANTINE
+        remediate_future_similar_messages:
+          type: boolean
+          description: Arm this message's campaign so similar messages arriving later are remediated automatically with the same action. The event must belong to a campaign. Similar messages already received are remediated only when remediate_similar_messages is set. Only DELETE, MOVE_TO_SPAM and QUARANTINE accept it
+          example: true
+        remediate_similar_messages:
+          type: boolean
+          description: Apply the same action to every similar message already in this message's campaign. Messages that arrive later are not affected. A campaign can include a message that was itself judged safe, which this remediates along with the rest and which similar_security_event_ids on the security event does not list. Only DELETE, MOVE_TO_SPAM and QUARANTINE accept it
+          example: true
+      required:
+      - action
+    ErrorResponseDto:
+      type: object
+      description: Standard error response format for all API errors
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: The requested user was not found
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+      required:
+      - error_code
+      - message
+      - request_id
+      - status_code
+    SecurityEventMessageDto:
+      type: object
+      description: The email message behind the security event
+      properties:
+        all_recipients:
+          type: array
+          description: Every addressed recipient (to, cc and bcc)
+          items:
+            type: string
+        attachments:
+          type: array
+          description: Attachments recorded when the message was scanned
+          items:
+            $ref: '#/components/schemas/SecurityEventAttachmentDto'
+        headers:
+          type: array
+          description: Security-relevant headers from the raw message, in their original order. Repeated headers such as 'Received' appear as separate entries.
+          items:
+            $ref: '#/components/schemas/SecurityEventHeaderDto'
+        links:
+          type: array
+          description: Links found in the message body
+          items:
+            $ref: '#/components/schemas/SecurityEventLinkDto'
+        message_timestamp:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the provider received the message
+          example: '2026-09-15T22:15:25Z'
+        recipient:
+          type: string
+          description: Mailbox this event belongs to
+          example: recipient@example.com
+        rfc_2392_message_id:
+          type:
+          - string
+          - 'null'
+          description: RFC 2392 Message-ID of the message
+          example: <CAF1x2y3z4@mail.example.com>
+        sender:
+          type: string
+          description: Sender address
+          example: sender@example.com
+        subject:
+          type:
+          - string
+          - 'null'
+          description: Message subject
+          example: RSVP Required
+    ValidationErrorResponseDto:
+      type: object
+      description: Error response for validation failures with field-level details
+      properties:
+        details:
+          type: array
+          description: List of field-level validation error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Request validation failed
+        request_id:
+          type: string
+          description: Unique request ID for debugging
+          example: 8f03bdf9-ac45-4279-8dbe-f28839c2fed3
+        status_code:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+      required:
+      - details
+      - error_code
+      - message
+      - request_id
+      - status_code
+    SecurityEventAnalysisDto:
+      type: object
+      description: What Adaptive's analysis concluded about the message
+      properties:
+        attack_tactics:
+          type: array
+          description: Tactics observed in the message
+          example:
+          - vendor_impersonation
+          items:
+            type: string
+        attack_type:
+          type: string
+          description: Kind of attack detected
+          enum:
+          - CALENDAR_PHISHING
+          - CREDENTIAL_PHISHING
+          - DENYLISTED
+          - FINANCIAL_FRAUD
+          - MALWARE_RANSOMWARE
+          - OFF_CHANNEL_PHISHING
+          - PENDING
+          - SAFE_IN_MALICIOUS_GROUP
+          - SCAM
+          - SPAM
+          example: CREDENTIAL_PHISHING
+        classification:
+          type: string
+          description: How the message was classified
+          enum:
+          - GRAYMAIL
+          - MALICIOUS
+          - SAFE
+          - SPAM
+          example: MALICIOUS
+        confidence:
+          type:
+          - integer
+          - 'null'
+          format: int32
+          description: Detection confidence, 0-100
+          example: 62
+        explanation:
+          description: Detailed reasoning behind the classification
+          oneOf:
+          - $ref: '#/components/schemas/SecurityEventExplanationDto'
+          - type: 'null'
+        same_message_count:
+          type: integer
+          format: int32
+          description: Copies of this message across recipients
+          example: 1
+        similar_security_event_ids:
+          type: array
+          description: Sibling security events in the same similar-message campaign
+          items:
+            type: string
+            format: uuid
+    SecurityEventHeaderDto:
+      type: object
+      description: A single header from the raw message
+      properties:
+        name:
+          type: string
+          description: Header name as it appears in the message
+          example: Received
+        value:
+          type: string
+          description: Header value
+          example: from mail.example.com (mail.example.com [203.0.113.50])
+    SecurityEventRemediationDto:
+      type: object
+      description: A remediation that was started for a security event
+      properties:
+        action:
+          type: string
+          description: The remediation that was started
+          enum:
+          - DELETE
+          - MARK_AS_SAFE
+          - MARK_AS_SPAM
+          - MOVE_TO_SPAM
+          - QUARANTINE
+          example: QUARANTINE
+        future_similar_messages_armed:
+          type: boolean
+          description: Whether the campaign was armed to remediate similar messages arriving later. False unless remediate_future_similar_messages was requested
+          example: true
+        id:
+          type: string
+          format: uuid
+          description: The remediated security event
+          example: a8f2947c-3aef-4f5a-981f-08be76fde32f
+        remediated_similar_security_event_ids:
+          type: array
+          description: The similar messages' security events the action was also started for, excluding this one. Empty unless remediate_similar_messages was requested
+          example:
+          - 3f2a8c41-5b6d-4e8f-9a0b-1c2d3e4f5a6b
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          description: Review state after the request. Remediation runs asynchronously; poll the security event until it is RESOLVED
+          enum:
+          - NEEDS_REVIEW
+          - REMEDIATING
+          - RESOLVED
+          example: REMEDIATING
+  securitySchemes:
+    bearer-token:
+      description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
+      scheme: bearer
+      type: http

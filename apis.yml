@@ -220,6 +220,130 @@ apis:
     url: data-model/adaptive-security-data-model.yml
   - type: LLMsTxt
     url: llms/adaptive-security-llms.txt
+- aid: adaptive-security:adaptive-security-email-security-api
+  name: Adaptive Security Email Security API
+  description: Email Security detections and company-configured email security rules
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Email Security
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-email-security-api-openapi.yml
+- aid: adaptive-security:adaptive-security-webhooks-api
+  name: Adaptive Security Webhooks API
+  description: >-
+    Adaptive can push events to your systems as they happen — a user fails a phishing simulation, completes
+    a training, falls overdue — so you can drive SIEM detections, SOAR playbooks, and downstream workflows
+    without polling.
+
+
+    ## Delivery
+
+
+    Endpoints must use HTTPS. Adaptive rejects `http://` URLs when you create or update an endpoint. Webhook
+    deliveries are encrypted in transit using TLS.
+
+
+    Every delivery is a `POST` request to your endpoint over HTTPS with `Content-Type: application/json`.
+    The body is a [CloudEvents 1.0](https://cloudevents.io/) envelope; the event-specific payload is at
+    `data.payload`, and any custom metadata configured on your subscription is echoed back at `data.customdata`.
+
+
+    Delivery is **at least once**: retries and rare internal races can deliver the same event more than
+    once, so dedupe on the envelope `id`. Failed deliveries — timeouts, connection errors, `408`, `429`,
+    and `5xx` responses other than `501` — are attempted up to five times. The four retry delays have
+    base values of 1 minute, 15 minutes, 1 hour, and 6 hours, each with up to 50% jitter. All other non-`2xx`
+    responses, including `1xx`, `3xx`, other `4xx` responses, and `501`, are permanent failures and are
+    not retried.
+
+
+    A `429` response always pauses all deliveries to your endpoint. A `503` does the same when it includes
+    a valid `Retry-After` value (either delay seconds or an HTTP date). The cooldown is at least one minute
+    and never shorter than either the current retry delay or a valid `Retry-After` value. Respond with
+    any `2xx` status within 10 seconds to acknowledge a delivery.
+
+
+    Events are not guaranteed to arrive in order. Use the envelope `time` field (when the event occurred)
+    rather than arrival time when ordering matters.
+
+
+    ## Verifying signatures
+
+
+    Every delivery carries an `X-Adaptive-Signature` header so you can verify it originated from Adaptive
+    and was not tampered with:
+
+
+    ```
+
+    X-Adaptive-Signature: t=1752692712,v1=5f7c9a2b...
+
+    ```
+
+
+    `t` is the Unix timestamp (seconds) of the delivery attempt and `v1` is a hex-encoded HMAC-SHA256
+    signature. To verify, recompute the signature over the string `{id}.{t}.{body}` — the envelope `id`,
+    the header timestamp, and the exact raw request body, joined with periods — using your endpoint's
+    signing secret as the HMAC key (the secret's literal characters, not hex-decoded):
+
+
+    ```python
+
+    import hashlib, hmac, time
+
+
+    def verify(
+        secret: str,
+        event_id: str,
+        header: str,
+        body: bytes,
+        tolerance_seconds: int = 300,
+    ) -> bool:
+        try:
+            parts = [part.split("=", 1) for part in header.split(",")]
+            timestamps = [
+                value for key, value in parts if key == "t"
+            ]
+            signatures = [
+                value for key, value in parts if key == "v1"
+            ]
+            if len(timestamps) != 1 or not signatures:
+                return False
+            timestamp = int(timestamps[0])
+        except (TypeError, ValueError):
+            return False
+
+        if abs(int(time.time()) - timestamp) > tolerance_seconds:
+            return False
+
+        signed = f"{event_id}.{timestamp}.".encode() + body
+        expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+        return any(
+            hmac.compare_digest(expected, signature)
+            for signature in signatures
+        )
+    ```
+
+
+    Read `event_id` from the parsed body, but verify against the exact raw body bytes. The example rejects
+    timestamps more than five minutes in the past or future to guard against replay and clock-skew abuse.
+    During secret rotation a delivery may carry multiple `v1` signatures; accept if any matches.
+
+
+    ## Subscription filters
+
+
+    Subscriptions can narrow an event type to specific resources — for example, only `phishing.simulation.failed`
+    events for one campaign. The filterable fields for each event are listed in its description below.
+    Filtering on a recurring phishing campaign matches every simulation run in the series.
+  humanURL: https://developer.adaptivesecurity.com/
+  baseURL: https://api.adaptivesecurity.com
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/adaptive-security-webhooks-api-openapi.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com

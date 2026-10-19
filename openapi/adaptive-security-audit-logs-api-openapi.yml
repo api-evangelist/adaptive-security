@@ -1,6 +1,158 @@
 openapi: 3.2.0
 info:
-  description: Adaptive API for external integrations.
+  description: 'Adaptive API for external integrations. ## 📊 API Overview
+
+
+    The Adaptive API gives your organization programmatic access to its Adaptive data. Use this RESTful API to report on security awareness training and phishing simulations, sync users and groups with your other systems, review admin activity, and act on email security detections. ### Purpose & Use Cases
+
+
+    This API is designed for:
+
+    - **Compliance Reporting**: Track training completion rates and identify employees with overdue trainings
+
+    - **Progress Monitoring**: Get real-time visibility into individual and team training progress
+
+    - **Data Integration**: Sync training data with your HRIS, BI tools, or custom dashboards
+
+    - **Automated Workflows**: Build alerts and notifications for training milestones or compliance deadlines
+
+
+    ### Technical Design
+
+
+    The API follows REST principles with:
+
+    - Resource-oriented URLs that clearly represent your data
+
+    - Standard HTTP methods
+
+    - JSON responses for easy parsing and integration
+
+    - Consistent error handling with detailed error messages
+
+    - Token-based authentication for secure access
+
+
+    ### Available Resources
+
+
+    | Resource | Purpose | Common Use Cases |
+
+    |----------|---------|------------------|
+
+    | **Users** | Access employee directory data | • Export user lists for reporting
+
+    • Track user status changes
+
+    • Map users to departments |
+
+    | **Groups** | Access user groups and their members | • Map users to the groups campaigns target
+
+    • Sync group membership with your directory or HRIS |
+
+    | **Training** | Monitor training campaigns and progress | • Track campaign completion rates
+
+    • Identify at-risk employees
+
+    • Generate compliance reports |
+
+    | **Phishing** | Monitor phishing campaigns, simulations, and per-user results | • Track click, report, and failure rates
+
+    • Identify users who failed a simulation
+
+    • Report on campaign outcomes |
+
+    | **Audit Logs** | Review admin actions taken in Adaptive | • Send admin activity to your SIEM
+
+    • Review configuration changes for compliance |
+
+    | **Email Security** | Act on detected security events and manage sender rules | • Pull detection details into an investigation
+
+    • Remediate, or undo the remediation of, a malicious email from a SOAR playbook
+
+    • Manage sender allow and deny lists |
+
+    | **Webhooks** | Receive events as they happen instead of polling | • Trigger SIEM detections and SOAR playbooks
+
+    • React to failed simulations, completed or overdue training, and new security events |
+
+
+    ## 🚀 Quick Start Guide
+
+
+    Get started with the Adaptive API in just 3 steps:
+
+
+    ### Step 1: Get Your API Token
+
+    See Authentication for more details on how to generate and use API tokens. ### Step 2: Make Your First API Call
+
+    ```bash
+
+    curl -X GET https://api.adaptivesecurity.com/v2/users \
+
+    -H "Authorization: Bearer YOUR_API_TOKEN"
+
+    ```
+
+
+    ### Step 3: Handle the Response
+
+    ```json
+
+    {
+
+    "users": [
+
+    {
+
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+
+    "email": "john.smith@example.com",
+
+    "first_name": "John",
+
+    "last_name": "Smith",
+
+    "status": "ACTIVE"
+
+    }
+
+    ],
+
+    "page_after": "123e4567-e89b-12d3-a456-426614174000"
+
+    }
+
+    ```
+
+
+    ## 🔐 Authentication
+
+
+    All API endpoints require authentication using an API token:
+
+
+    ```http
+
+    Authorization: Bearer YOUR_API_TOKEN
+
+    ```
+
+
+    **Token Management:**
+
+    - Tokens are generated in the Admin portal under **Settings → API**
+
+    - Tokens have a user-set expiration but can be revoked at any time
+
+    - Store tokens securely - treat them like passwords
+
+
+    **Permissions:**
+
+
+    Tokens are assigned permissions that limit the scope of the actions they can be used to take. You can choose the permissions a token is assigned when it''s created and edit them after creation. Each endpoint''s documentation lists which permissions are required to use it. As a best practice, only grant tokens the permissions they need and nothing more. For example, if only using the API to read data, don''t grant your token `:write`-level permissions.'
   title: Adaptive Audit Logs API
   version: v2
 servers:
@@ -9,12 +161,15 @@ servers:
 security:
 - bearer-token: []
 tags:
-- description: BETAAdmin audit log endpoints
+- description: Admin audit log endpoints
   name: Audit Logs
 paths:
   /v2/audit-logs:
     get:
-      description: BETARetrieve a paginated list of admin audit logs. Supports filtering by date range and action types.
+      description: 'Retrieve a paginated list of admin audit logs. Supports filtering by date range and action types.
+
+
+        **Required permission:** `admin:read`'
       operationId: listAuditLogs
       parameters:
       - description: Page cursor for pagination
@@ -156,7 +311,10 @@ paths:
       - Audit Logs
   /v2/audit-logs/{auditLogId}:
     get:
-      description: BETARetrieve detailed information about a specific audit log entry
+      description: 'Retrieve detailed information about a specific audit log entry
+
+
+        **Required permission:** `admin:read`'
       operationId: getAuditLog
       parameters:
       - description: Audit log ID
@@ -266,22 +424,6 @@ paths:
       - Audit Logs
 components:
   schemas:
-    AuditLogActingAdminDto:
-      type: object
-      description: Information about the admin who performed the action
-      properties:
-        email:
-          type: string
-          description: Email address of the admin
-          example: admin@example.com
-        id:
-          type: string
-          description: Unique identifier for the admin
-          example: a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6
-        role:
-          type: string
-          description: Role of the admin
-          example: ACCOUNT_OWNER
     AuditLogDto:
       type: object
       description: Admin audit log entry
@@ -318,21 +460,6 @@ components:
           type: boolean
           description: Whether the action was successful
           example: true
-    ErrorDetail:
-      type: object
-      description: Field-level validation error details
-      properties:
-        field:
-          type: string
-          description: Field name that failed validation
-          example: email
-        message:
-          type: string
-          description: Validation error message for this field
-          example: Email address is not valid
-      required:
-      - field
-      - message
     AuditLogListResponseDto:
       type: object
       description: Paginated list of admin audit logs
@@ -343,7 +470,9 @@ components:
           items:
             $ref: '#/components/schemas/AuditLogDto'
         page_after:
-          type: string
+          type:
+          - string
+          - 'null'
           description: Cursor for the next page of results. Null if this is the last page
           example: 456e7890-f12b-34c5-d678-901234567890
     ErrorResponseDto:
@@ -404,6 +533,37 @@ components:
       - message
       - request_id
       - status_code
+    AuditLogActingAdminDto:
+      type: object
+      description: Information about the admin who performed the action
+      properties:
+        email:
+          type: string
+          description: Email address of the admin
+          example: admin@example.com
+        id:
+          type: string
+          description: Unique identifier for the admin
+          example: a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6
+        role:
+          type: string
+          description: Role of the admin
+          example: ACCOUNT_OWNER
+    ErrorDetail:
+      type: object
+      description: Field-level validation error details
+      properties:
+        field:
+          type: string
+          description: Field name that failed validation
+          example: email
+        message:
+          type: string
+          description: Validation error message for this field
+          example: Email address is not valid
+      required:
+      - field
+      - message
   securitySchemes:
     bearer-token:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
