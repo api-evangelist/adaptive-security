@@ -1568,3 +1568,9 @@ components:
       description: 'API authentication token obtained from the Adaptive Admin portal (Settings → API Tokens). Include the token in the Authorization header as: Bearer YOUR_TOKEN'
       scheme: bearer
       type: http
+x-provenance:
+  method: harvested
+  publisher: Adaptive Security
+  source: https://developer.adaptivesecurity.com/openapi.json
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
