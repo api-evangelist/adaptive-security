@@ -340,6 +340,8 @@ apis:
   humanURL: https://developer.adaptivesecurity.com/
   baseURL: https://api.adaptivesecurity.com
   tags:
+  - Webhook
+  tags_raw:
   - Webhooks
   properties:
   - type: OpenAPI
