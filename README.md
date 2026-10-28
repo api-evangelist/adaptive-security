@@ -64,6 +64,147 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Adaptive Security is a company surfaced as a portfolio company of a16z and added to the API Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+Adaptive Security is the human security platform for the AI era, defending organizations against AI-powered social engineering — deepfakes, voice cloning, phishing, smishing and vishing — through interactive security awareness training, hyperrealistic multi-channel attack simulations, cloud email security, and AI governance. Founded by Brian Long and Andrew Jones and backed by Andreessen Horowitz (a16z) and the OpenAI Startup Fund, Adaptive protects 1,000+ enterprise customers including PayPal, Figma, Ramp, Plaid and the NHL. The Adaptive API is a read-only REST reporting interface (v2) that gives programmatic access to users, groups, training campaigns, phishing campaigns and simulations, and audit logs for compliance reporting, progress monitoring, and BI/HRIS/SIEM data integration.
 
-Source: portfolio company of [a16z](https://github.com/api-evangelist/a16z)
+**Areas:** Company · Security · Cybersecurity · Security Awareness Training · Phishing Simulation · Deepfake Defense · AI Governance · Social Engineering · Reporting · Compliance
+
+## Adaptive Security on APIs.io
+
+Everything profiled for Adaptive Security is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/adaptive-security/](https://apis.io/providers/adaptive-security/)** — or go straight to one of the APIs or properties below.
+
+### APIs (5)
+
+- [Adaptive Security Audit Logs API](https://apis.io/apis/adaptive-security/adaptive-security-audit-logs-api/) — <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase;…
+- [Adaptive Security Groups API](https://apis.io/apis/adaptive-security/adaptive-security-groups-api/) — <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase;…
+- [Adaptive Security Phishing API](https://apis.io/apis/adaptive-security/adaptive-security-phishing-api/) — <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase;…
+- [Adaptive Security Training API](https://apis.io/apis/adaptive-security/adaptive-security-training-api/) — <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase;…
+- [Adaptive Security Users API](https://apis.io/apis/adaptive-security/adaptive-security-users-api/) — <span style="background-color: #ff9500; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase;…
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### AsyncAPI (1)
+
+Event-driven and webhook contracts.
+
+- [Adaptive Security Webhooks](https://apis.io/asyncapis/adaptive-security/adaptive-security-webhooks/)
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [adaptive-security](https://apis.io/servers/adaptive-security/adaptive-security/)
+
+#### Agentic access (1)
+
+Which operations an agent can call, which act, and which need a human in the loop.
+
+- [Adaptive Security Agentic Access](https://apis.io/agentic-access/adaptive-security/adaptive-security-agentic-access/)
+
+#### Collections (5)
+
+Postman and Open Collection request collections.
+
+- [Adaptive Audit Logs API](https://apis.io/collections/adaptive-security/open-adaptive-security-audit-logs-api/)
+- [Adaptive Audit Logs Groups API](https://apis.io/collections/adaptive-security/open-adaptive-security-groups-api/)
+- [Adaptive Audit Logs Phishing API](https://apis.io/collections/adaptive-security/open-adaptive-security-phishing-api/)
+- [Adaptive Audit Logs Training API](https://apis.io/collections/adaptive-security/open-adaptive-security-training-api/)
+- [Adaptive Audit Logs Users API](https://apis.io/collections/adaptive-security/open-adaptive-security-users-api/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Adaptive Security Openapi Overlay](https://apis.io/overlays/adaptive-security/adaptive-security-openapi-overlay/)
+
+#### Security (3)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Adaptive Security Authentication](https://apis.io/security/adaptive-security/adaptive-security-authentication/)
+- [Adaptive Security Domain Security](https://apis.io/security/adaptive-security/adaptive-security-domain-security/)
+- [Adaptive Security Trust Center](https://apis.io/security/adaptive-security/adaptive-security-trust-center/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Adaptive Security Plans Pricing](https://apis.io/plans/adaptive-security/adaptive-security-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Adaptive Security Rate Limits](https://apis.io/rate-limits/adaptive-security/adaptive-security-rate-limits/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://www.adaptivesecurity.com/)
+- [Documentation](https://developer.adaptivesecurity.com/)
+- [Getting started](https://developer.adaptivesecurity.com/)
+- [API reference](https://developer.adaptivesecurity.com/)
+- [Pricing](https://www.adaptivesecurity.com/pricing)
+- [Sign up](https://admin.adaptivesecurity.com/login)
+- [Support](https://www.adaptivesecurity.com/support)
+- [Changelog](https://www.adaptivesecurity.com/resources/product-updates)
+- [Blog](https://www.adaptivesecurity.com/blog)
+- [Terms of service](https://www.adaptivesecurity.com/legal/terms-of-service)
+- [Privacy policy](https://www.adaptivesecurity.com/legal/privacy-policy)
+- [GitHub](https://github.com/adaptivesecurity)
+- [Status](https://status.adaptivesecurity.com/)
+
+## API Evangelist rating
+
+**Kin Score 44.5** — developing · rubric 0.24.0 · scored 2026-10-17
+
+| Facet | Score |
+|---|---|
+| Discoverability | 73.2 |
+| Contract quality | 60.6 |
+| Contract governance | 4.5 |
+| Operational transparency | 34.2 |
+| Developer ergonomics | 20.8 |
+| Access clarity | 53.9 |
+
+**Agent readiness 35.5** — agent-ready
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | na |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | na |
+| Error Semantics | verified |
+| OpenAPI Examples | verified |
+| Rate Limit Signal | derived (partial credit) |
+| Event Surface Described | derived (partial credit) |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | na |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+
+**Regulatory alignment 29.4** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/adaptive-security/](https://apis.io/providers/adaptive-security/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Adaptive Security: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/adaptive-security/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
